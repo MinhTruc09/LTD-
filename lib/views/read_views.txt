@@ -1,0 +1,6 @@
+_Thư mục views:_
+    Chứa các màn hình giao diện người dùng của ứng dụng.
+_Notes: (Days,times,line).
+
+
+_Variable:

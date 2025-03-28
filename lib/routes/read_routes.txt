@@ -1,0 +1,6 @@
+_Thư mục routes:_
+Chứa các file định nghĩa route (điều hướng) của ứng dụng, giúp quản lý chuyển đổi giữa các màn hình.
+_Notes: (Days,times,line).
+
+
+_Variable:

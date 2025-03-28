@@ -1,0 +1,6 @@
+_Thư mục services:_
+Chứa các file xử lý logic liên quan đến API, cơ sở dữ liệu và các tác vụ nền khác.
+_Notes: (Days,times,line).
+
+
+_Variable:

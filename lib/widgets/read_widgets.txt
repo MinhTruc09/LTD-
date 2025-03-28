@@ -1,0 +1,6 @@
+_Thư mục widgets:_
+Chứa các widget dùng chung, giúp tái sử dụng giao diện trong ứng dụng.
+_Notes: (Days,times,line).
+    28/3/2025 create theme.dart (reuse in main.dart and the rest)
+
+_Variable:
