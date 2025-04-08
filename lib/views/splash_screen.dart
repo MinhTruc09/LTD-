@@ -1,6 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
+import 'package:movieom_app/widgets/movieom_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,24 +13,27 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState(){
     super.initState();
-    Timer(Duration(seconds: 2),(){
-      Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MainLoginScreen()),
-      );
+    
+    Future.delayed(const Duration(seconds: 3),(){
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainLoginScreen()));
     });
   }
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/images/logo1.png',height: 400,width: 400,),
+
+            Image.asset('assets/images/img.png',height: 400,width: 400,),
+            Transform.translate(
+                offset: const Offset(0, -150),
+                child: const MovieomLogo()),
+
 
           ],
         ),
       ),
-    );
+    );;
   }
 }
