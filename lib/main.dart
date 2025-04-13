@@ -1,8 +1,21 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:movieom_app/firebase_options.dart';
+import 'package:movieom_app/routes/app_routes.dart';
 import 'package:movieom_app/views/splash_screen.dart';
 import 'widgets/theme.dart';
-void main() {
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
+  try{
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print("Firebase da khoi tao thanh cong");
+  }catch(e){
+    print("Loi khi khoi tao Firebase: $e");
+  }
+
 }
 
 class MyApp extends StatelessWidget {
@@ -12,10 +25,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Movieom',
+      title: 'Movieom App',
       theme: darkTheme,
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      initialRoute: '/splash',
+      routes: appRoutes,
+      onGenerateRoute: onGenerateRoute,
     );
   }
 }

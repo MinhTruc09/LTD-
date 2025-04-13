@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:movieom_app/services/auth_model.dart';
+import 'package:movieom_app/widgets/gradient_background.dart';
+import 'package:movieom_app/widgets/gradient_button.dart';
 import 'package:movieom_app/widgets/movieom_logo.dart';
 
 class MainLoginScreen extends StatefulWidget {
@@ -8,107 +12,135 @@ class MainLoginScreen extends StatefulWidget {
   State<MainLoginScreen> createState() => _MainLoginScreenState();
 }
 
-class _MainLoginScreenState extends State<MainLoginScreen> {
+class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..forward();
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(height: 50),
-              const MovieomLogo(),
-        
-              // Logo
-              Transform.translate(
-                offset: const Offset(0, -100),
-                child: Image.asset('assets/images/logo.png', height: 400),
-              ),
-        
-              // Register Button
-              Transform.translate(
-                offset: const Offset(0, -150),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Handle register
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3F54D1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 20), // tăng kích thước
+      body: GradientBackground(
+        gradientEnd: Alignment.bottomRight,
+        colors: const [Colors.black, Colors.black, Color(0xFF3F54D1)],
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(height: screenHeight * 0.05),
+
+                    // Logo
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: const MovieomLogo(),
                     ),
-                    child: const Text(
-                      "Đăng ký tài khoản",
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
-                        fontFamily: 'Roboto', // dùng Roboto
+                    const SizedBox(height: 20),
+
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Image.asset('assets/images/logom.png', height: 150),
+                    ),
+                    const SizedBox(height: 15),
+
+                    // Register Button
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: GradientButton(
+                          text: "Đăng ký tài khoản",
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AuthModel(),
+                              ),
+                            );
+                          },
+                          fontSize: 18,
+                        ),
                       ),
                     ),
-                  ),
+
+                    const SizedBox(height: 20),
+
+                    // Facebook Button
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: GradientButton(
+                          text: "Đăng nhập bằng Facebook",
+                          onTap: () {
+                            // TODO: Facebook login
+                          },
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Text Link to Login
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AuthModel(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          "Đăng nhập",
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            color: Colors.white,
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+                  ],
                 ),
               ),
-        
-              const SizedBox(height: 16),
-        
-              // Facebook Button
-              Transform.translate(
-                offset: const Offset(0, -150),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      // TODO: Facebook login
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 20), // tăng kích thước
-                    ),
-                    child: const Text(
-                      "Đăng nhập bằng Facebook",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontFamily: 'Roboto',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-        
-              const SizedBox(height: 24),
-        
-              // Text Link to Login
-              Transform.translate(
-                offset: const Offset(0, -150),
-                child: GestureDetector(
-                  onTap: () {
-                    // TODO: navigate to login screen
-                  },
-                  child: const Text(
-                    "Đăng nhập",
-                    style: TextStyle(
-                      fontSize: 17,
-                      color: Colors.white,
-                      decoration: TextDecoration.underline,
-                      fontFamily: 'Roboto',
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
