@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "601001758505",
+    "project_id": "movieom-25093",
+    "storage_bucket": "movieom-25093.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:601001758505:android:3c172e9943379c87a9b138",
+        "android_client_info": {
+          "package_name": "com.example.movieom_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "601001758505-pkr4o0ece0n7k6435cgkvjlg9dq5ml91.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.movieom_app",
+            "certificate_hash": "86e2454ce3340bbc02aebc76893b7e12014d998f"
+          }
+        },
+        {
+          "client_id": "601001758505-e8ajh2cqomc2mbk5nkqs583lpnckcr00.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-9Go6LGJ8To-Gtca0mIrsziUaEZH7iJQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "601001758505-e8ajh2cqomc2mbk5nkqs583lpnckcr00.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "601001758505-0lsom697tckpo7qic1umnjv25n3qct51.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.movieomApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

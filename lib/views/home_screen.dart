@@ -43,53 +43,53 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: GradientBackground(
-        gradientEnd: Alignment.bottomRight,
-        colors: const [Color(0xFF3F54D1), Colors.black], // Đồng bộ với SignInScreen
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40),
-                // Logo
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: const MovieomLogo(),
-                ),
-                const SizedBox(height: 20),
-                // Welcome Message
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                    child: Text(
-                      "Signed in successfully as: ${user.email}",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
+    return GradientBackground(
+      gradientEnd: Alignment.bottomRight,
+      colors: const [Color(0xFF3F54D1), Colors.black],
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 40),
+              // Logo
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: const MovieomLogo(),
+              ),
+              const SizedBox(height: 20),
+              // Welcome Message
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                  child: Text(
+                    "Signed in successfully as: ${user.email}",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
-                // Sign Out Button
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: GradientButton(
-                    text: "Sign Out",
-                    onTap: () {
-                      FirebaseAuth.instance.signOut();
-                    },
-                    fontSize: 18,
-                  ),
+              ),
+              const SizedBox(height: 40),
+              // Sign Out Button
+              ScaleTransition(
+                scale: _scaleAnimation,
+                child: GradientButton(
+                  text: "Sign Out",
+                  onTap: () {
+                    FirebaseAuth.instance.signOut();
+                    // Điều hướng về màn hình đăng nhập
+                    Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+                  },
+                  fontSize: 18,
                 ),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
