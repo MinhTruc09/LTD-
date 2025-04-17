@@ -67,8 +67,8 @@ flutter:
   assets:
     - assets/images/
     - assets/fonts/
-    - assets/icons/
-    - assets/json/
+    # - assets/icons/
+    # - assets/json/
   fonts:
     - family: RubikDoodleShadow
       fonts:
