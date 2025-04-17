@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:movieom_app/services/main_screen.dart';
 import 'package:movieom_app/views/forgot_password.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
+import 'package:movieom_app/views/movie_detail_screen.dart';
+import 'package:movieom_app/views/movie_home_screen.dart';
 import 'package:movieom_app/views/splash_screen.dart';
 import 'package:movieom_app/views/home_screen.dart';
 
@@ -11,6 +13,8 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/splash': (context) => const SplashScreen(),
   '/forgot_password': (context) => const ForgotPassword(),
   '/home': (context) => const HomeScreen(),
+  '/movie_home': (context) => const MovieHomeScreen(),
+  '/movie_detail': (context) => const MovieDetailScreen(),
 };
 
 // onGenerateRoute tuy chinh hieu ung chuyen trang
@@ -31,6 +35,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       break;
     case '/home':
       page = const HomeScreen();
+      break;
+    case '/movie_home':
+      page = const MovieHomeScreen();
+      break;
+    case '/movie_detail':
+      page = const MovieDetailScreen();
       break;
     default:
       page = const SplashScreen();

@@ -7,16 +7,19 @@ import 'package:movieom_app/widgets/gradient_button.dart';
 import 'package:movieom_app/widgets/header_section.dart';
 import 'package:movieom_app/widgets/custom_text_field.dart';
 import 'package:movieom_app/widgets/custom_alert_dialog.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
+import 'package:movieom_app/controllers/user_controller.dart';
 
 class SignupScreen extends StatefulWidget {
   final VoidCallback showLoginPage;
-  const SignupScreen({super.key,required this.showLoginPage});
+  const SignupScreen({super.key, required this.showLoginPage});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderStateMixin {
+class _SignupScreenState extends State<SignupScreen>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -28,6 +31,8 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
   late Animation<double> _scaleAnimation;
   late Animation<Alignment> _gradientAnimation;
   bool _isLoading = false;
+  final AuthController _authController = AuthController();
+  final UserController _userController = UserController();
 
   @override
   void initState() {
@@ -85,12 +90,12 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
     });
 
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      await _authController.signUp(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
       );
 
-      await addUserDetails(
+      await _userController.addUserDetails(
         _firstNameController.text.trim(),
         _lastNameController.text.trim(),
         _emailController.text.trim(),
@@ -142,17 +147,9 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
     }
   }
 
-  Future addUserDetails(String firstName, String lastName, String email, int age) async {
-    await FirebaseFirestore.instance.collection('users').add({
-      'first name': firstName,
-      'last name': lastName,
-      'email': email,
-      'age': age,
-    });
-  }
-
   bool passwordConfirmed() {
-    return _passwordController.text.trim() == _confirmPasswordController.text.trim();
+    return _passwordController.text.trim() ==
+        _confirmPasswordController.text.trim();
   }
 
   @override
@@ -180,7 +177,8 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: HeaderSection(
-                        icon: Image.asset('assets/images/userlogo.png', height: 100),
+                        icon: Image.asset('assets/images/userlogo.png',
+                            height: 100),
                         title: 'Create account to watch',
                         subtitle: 'Sign up',
                       ),
@@ -213,7 +211,8 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                                   if (value == null || value.isEmpty) {
                                     return 'Please enter your email';
                                   }
-                                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                                  final emailRegex =
+                                      RegExp(r'^[^@]+@[^@]+\.[^@]+$');
                                   if (!emailRegex.hasMatch(value)) {
                                     return 'Please enter a valid email';
                                   }
@@ -297,12 +296,13 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                       scale: _scaleAnimation,
                       child: _isLoading
                           ? const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      )
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            )
                           : GradientButton(
-                        text: "Sign Up",
-                        onTap: signUp,
-                      ),
+                              text: "Sign Up",
+                              onTap: signUp,
+                            ),
                     ),
                     const SizedBox(height: 20),
 
@@ -319,7 +319,8 @@ class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderSt
                             ),
                           ),
                           GestureDetector(
-                            onTap: widget.showLoginPage, // Gọi callback trực tiếp
+                            onTap:
+                                widget.showLoginPage, // Gọi callback trực tiếp
                             child: Text(
                               "Sign in",
                               style: GoogleFonts.poppins(
