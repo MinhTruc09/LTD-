@@ -6,6 +6,7 @@ import 'package:movieom_app/widgets/gradient_background.dart';
 import 'package:movieom_app/widgets/gradient_button.dart';
 import 'package:movieom_app/widgets/header_section.dart';
 import 'package:movieom_app/widgets/custom_alert_dialog.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
 
 class SignInScreen extends StatefulWidget {
   final VoidCallback showRegisterPage;
@@ -15,7 +16,8 @@ class SignInScreen extends StatefulWidget {
   State<SignInScreen> createState() => _SignInScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderStateMixin {
+class _SignInScreenState extends State<SignInScreen>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -24,6 +26,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   late Animation<double> _scaleAnimation;
   late Animation<Alignment> _gradientAnimation;
   bool _isLoading = false;
+  final AuthController _authController = AuthController();
 
   @override
   void initState() {
@@ -64,9 +67,9 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
       });
 
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
+        await _authController.signIn(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
         );
 
         if (!mounted) return;
@@ -74,7 +77,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/mainscreen',
-              (route) => false,
+          (route) => false,
         );
       } on FirebaseAuthException catch (e) {
         if (!mounted) return;
@@ -125,7 +128,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: HeaderSection(
-                          icon: Image.asset('assets/images/userlogo.png', height: 100),
+                          icon: Image.asset('assets/images/userlogo.png',
+                              height: 100),
                           title: "Ready to watch something",
                           subtitle: "Please sign in",
                         ),
@@ -158,7 +162,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                     if (value == null || value.isEmpty) {
                                       return 'Please enter your email';
                                     }
-                                    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                                    final emailRegex =
+                                        RegExp(r'^[^@]+@[^@]+\.[^@]+$');
                                     if (!emailRegex.hasMatch(value)) {
                                       return 'Please enter a valid email';
                                     }
@@ -195,7 +200,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                             children: [
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.pushNamed(context, '/forgot_password');
+                                  Navigator.pushNamed(
+                                      context, '/forgot_password');
                                 },
                                 child: Text(
                                   "Forgot Password?",
@@ -217,12 +223,13 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                         scale: _scaleAnimation,
                         child: _isLoading
                             ? const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        )
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              )
                             : GradientButton(
-                          text: "Sign In",
-                          onTap: signIn,
-                        ),
+                                text: "Sign In",
+                                onTap: signIn,
+                              ),
                       ),
                       const SizedBox(height: 20),
 
@@ -239,7 +246,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                               ),
                             ),
                             GestureDetector(
-                              onTap: widget.showRegisterPage, // Gọi callback trực tiếp
+                              onTap: widget
+                                  .showRegisterPage, // Gọi callback trực tiếp
                               child: Text(
                                 "Register",
                                 style: GoogleFonts.poppins(
