@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/widgets/gradient_background.dart';
 import 'package:movieom_app/widgets/gradient_button.dart';
 import 'package:movieom_app/widgets/movieom_logo.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,8 +13,10 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  final user = FirebaseAuth.instance.currentUser!;
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  final AuthController _authController = AuthController();
+  late User user;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -21,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    user = _authController.getCurrentUser()!;
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -80,10 +84,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 scale: _scaleAnimation,
                 child: GradientButton(
                   text: "Sign Out",
-                  onTap: () {
-                    FirebaseAuth.instance.signOut();
+                  onTap: () async {
+                    await _authController.signOut();
                     // Điều hướng về màn hình đăng nhập
-                    Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
+                    if (!mounted) return;
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, '/main', (route) => false);
                   },
                   fontSize: 18,
                 ),

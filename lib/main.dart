@@ -4,18 +4,21 @@ import 'package:movieom_app/firebase_options.dart';
 import 'package:movieom_app/routes/app_routes.dart';
 import 'package:movieom_app/views/splash_screen.dart';
 import 'widgets/theme.dart';
-void main() async{
+
+// import 'package:movieom_app/services/favoritemovieservice.dart';
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
-  try{
+
+  try {
     await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
+      options: DefaultFirebaseOptions.currentPlatform,
     );
     print("Firebase da khoi tao thanh cong");
-  }catch(e){
+  } catch (e) {
     print("Loi khi khoi tao Firebase: $e");
   }
 
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

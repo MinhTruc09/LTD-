@@ -30,11 +30,12 @@ class _MainScreenPickerState extends State<MainScreenPicker> {
       ),
       bottomNavigationBar: DockingBar(
           activeIndex: _currentIndex,
-          onTap: (index) {
+          onTap: (index){
             setState(() {
               _currentIndex = index;
             });
           }),
+      
     );
   }
 }

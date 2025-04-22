@@ -1,54 +1,45 @@
 import 'package:flutter/material.dart';
 
-// import 'package:movieom_app/views/favorite_screen.dart';
 class Appbarfavorite extends StatelessWidget {
   const Appbarfavorite({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black, // Nền đen cho AppBar
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
+    return AppBar(
+      backgroundColor: Colors.black,
+      automaticallyImplyLeading: false, // Ngăn AppBar tự động thêm nút back
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+        onPressed: () {
+          Navigator.pop(context);
+        },
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Nút quay lại
-          IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              size: 30,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(context); // Quay lại màn hình trước
-            },
+      title: const Center(
+        // Căn giữa tiêu đề
+        child: Text(
+          'Danh sách yêu thích',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
-          // Tiêu đề
-          const Text(
-            'Danh sách yêu thích',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          // Nút chỉnh sửa
-          TextButton(
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(
+              right: 16.0), // Thêm một chút padding bên phải (tùy chọn)
+          child: TextButton(
             onPressed: () {
               print('Chỉnh sửa được nhấn!');
             },
             child: const Text(
               'Chỉnh sửa',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

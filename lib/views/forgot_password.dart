@@ -8,6 +8,7 @@ import 'package:movieom_app/widgets/header_section.dart';
 import 'package:movieom_app/widgets/custom_alert_dialog.dart';
 import 'package:movieom_app/widgets/input_container.dart';
 import 'package:movieom_app/widgets/movieom_logo.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
@@ -16,12 +17,14 @@ class ForgotPassword extends StatefulWidget {
   State<ForgotPassword> createState() => _ForgotPasswordState();
 }
 
-class _ForgotPasswordState extends State<ForgotPassword> with SingleTickerProviderStateMixin {
+class _ForgotPasswordState extends State<ForgotPassword>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   bool _isLoading = false;
+  final AuthController _authController = AuthController();
 
   @override
   void initState() {
@@ -84,7 +87,7 @@ class _ForgotPasswordState extends State<ForgotPassword> with SingleTickerProvid
     });
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      await _authController.resetPassword(email);
       if (!mounted) return;
       showDialog(
         context: context,
@@ -136,7 +139,10 @@ class _ForgotPasswordState extends State<ForgotPassword> with SingleTickerProvid
       ),
       body: GradientBackground(
         gradientEnd: Alignment.bottomRight,
-        colors: const [ Colors.black,Color(0xFF3F54D1)], // Đồng bộ với SignInScreen
+        colors: const [
+          Colors.black,
+          Color(0xFF3F54D1)
+        ], // Đồng bộ với SignInScreen
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -178,13 +184,13 @@ class _ForgotPasswordState extends State<ForgotPassword> with SingleTickerProvid
               scale: _scaleAnimation,
               child: _isLoading
                   ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    )
                   : GradientButton(
-                text: "Send Reset Link",
-                onTap: passwordReset,
-                fontSize: 18,
-              ),
+                      text: "Send Reset Link",
+                      onTap: passwordReset,
+                      fontSize: 18,
+                    ),
             ),
             const SizedBox(height: 20),
           ],

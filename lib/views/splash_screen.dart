@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
+import 'package:movieom_app/services/main_screen.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
-import 'package:movieom_app/views/signin_screen.dart';
 import 'package:movieom_app/widgets/gradient_background.dart';
 import 'package:movieom_app/widgets/movieom_logo.dart';
 
@@ -11,11 +12,13 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rotationAnimation;
+  final AuthController _authController = AuthController();
 
   @override
   void initState() {
@@ -39,17 +42,45 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _animationController, curve: Curves.linear),
     );
 
-    // Chuyển hướng sau 3 giây
+    // Kiểm tra trạng thái đăng nhập và chuyển hướng tương ứng
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const MainLoginScreen()),
-          );
-        }
-      });
+      _checkLoginStatus();
     });
+  }
+
+  // Phương thức kiểm tra trạng thái đăng nhập
+  Future<void> _checkLoginStatus() async {
+    try {
+      // Chờ một chút để hiệu ứng splash screen hiển thị
+      await Future.delayed(const Duration(seconds: 3));
+
+      if (!mounted) return;
+
+      // Kiểm tra xem người dùng đã đăng nhập chưa
+      final isLoggedIn = await _authController.isUserLoggedIn();
+
+      if (isLoggedIn) {
+        // Nếu đã đăng nhập, chuyển đến màn hình chính
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      } else {
+        // Nếu chưa đăng nhập, chuyển đến màn hình đăng nhập
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLoginScreen()),
+        );
+      }
+    } catch (e) {
+      // Xử lý lỗi - mặc định chuyển đến màn hình đăng nhập
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLoginScreen()),
+        );
+      }
+    }
   }
 
   @override
