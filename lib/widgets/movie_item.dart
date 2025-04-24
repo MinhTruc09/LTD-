@@ -27,7 +27,7 @@ class MovieItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap ??
           () {
-            // Mặc định sẽ điều hướng đến trang chi tiết phim
+            // Điều hướng đến trang chi tiết phim
             Navigator.pushNamed(
               context,
               '/movie_detail',

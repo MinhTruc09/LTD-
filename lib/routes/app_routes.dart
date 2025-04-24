@@ -6,6 +6,7 @@ import 'package:movieom_app/views/movie_detail_screen.dart';
 import 'package:movieom_app/views/movie_home_screen.dart';
 import 'package:movieom_app/views/splash_screen.dart';
 import 'package:movieom_app/views/home_screen.dart';
+import 'package:movieom_app/views/video_player_screen.dart';
 
 final Map<String, WidgetBuilder> appRoutes = {
   '/mainscreen': (context) => const MainScreen(),
@@ -15,6 +16,8 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/home': (context) => const HomeScreen(),
   '/movie_home': (context) => const MovieHomeScreen(),
   '/movie_detail': (context) => const MovieDetailScreen(),
+  '/video_player': (context) =>
+      const VideoPlayerScreen(videoUrl: '', title: 'Movieom Player'),
 };
 
 // onGenerateRoute tuy chinh hieu ung chuyen trang
@@ -41,6 +44,15 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       break;
     case '/movie_detail':
       page = const MovieDetailScreen();
+      break;
+    case '/video_player':
+      // For video player, we need to extract parameters from settings.arguments
+      final args = settings.arguments as Map<String, dynamic>;
+      page = VideoPlayerScreen(
+        videoUrl: args['videoUrl'] as String,
+        title: args['title'] as String,
+        isEmbed: args['isEmbed'] as bool? ?? false,
+      );
       break;
     default:
       page = const SplashScreen();
