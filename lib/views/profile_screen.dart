@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
 import 'package:movieom_app/widgets/gradient_button.dart';
+import 'package:movieom_app/widgets/drawer_widget.dart'; // Import DrawerWidget
+import 'package:movieom_app/widgets/profile_containers.dart'; // Import ProfileContainers
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,7 +15,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthController _authController = AuthController();
-  String? _userEmail;
+  String? _userName;
   bool _isLoading = false;
 
   @override
@@ -25,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadUserInfo() async {
     final user = _authController.getCurrentUser();
     setState(() {
-      _userEmail = user?.email;
+      _userName = user?.email;
     });
   }
 
@@ -38,17 +40,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await _authController.signOut();
       if (!mounted) return;
 
-      // Chuyển về màn hình đăng nhập và xóa tất cả các màn hình trong stack
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const MainLoginScreen()),
-        (route) => false,
+            (route) => false,
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Đã xảy ra lỗi khi đăng xuất: ${e.toString()}')),
+            content: Text('Đã xảy ra lỗi khi đăng xuất: ${e.toString()}'),
+          ),
         );
       }
     } finally {
@@ -68,55 +70,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.black,
         title: Text(
           'Thông tin cá nhân',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
+      drawer: const DrawerWidget(), // Navbar dạng drawer
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
               // Ảnh đại diện
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: const Color(0xFF3F54D1),
-                child: Icon(
-                  Icons.person,
-                  size: 60,
-                  color: Colors.white,
-                ),
-              ),
+              Image.asset('assets/images/userlogo.png',height: 90,),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
               // Email người dùng
               Text(
-                _userEmail ?? 'Chưa đăng nhập',
-                style: GoogleFonts.poppins(
+                _userName ?? 'Chưa đăng nhập',
+                style: GoogleFonts.aBeeZee(
                   fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
 
-              // Nút đăng xuất
-              _isLoading
-                  ? const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    )
-                  : GradientButton(
-                      text: "Đăng xuất",
-                      onTap: _signOut,
-                      fontSize: 16,
-                    ),
+              // Các container
+              ProfileContainers(
+                onSignOut: _signOut, // Truyền hàm đăng xuất
+              ),
             ],
           ),
         ),

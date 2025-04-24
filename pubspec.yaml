@@ -29,6 +29,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  diagonal_decoration: ^1.0.2
   flutter:
     sdk: flutter
   firebase_core: ^3.13.0
