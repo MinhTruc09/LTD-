@@ -668,6 +668,38 @@ class MovieApiService {
     }
   }
 
+  // Phương thức mới để kiểm tra và làm sạch URL video
+  static String cleanVideoUrl(String url) {
+    if (url.isEmpty) {
+      return '';
+    }
+
+    // Loại bỏ khoảng trắng
+    String cleanUrl = url.trim();
+
+    // Đảm bảo có http hoặc https
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://$cleanUrl';
+    }
+
+    // In ra URL để debug
+    print('URL video đã làm sạch: $cleanUrl');
+
+    try {
+      // Kiểm tra xem URL có hợp lệ không
+      Uri uri = Uri.parse(cleanUrl);
+      // Đảm bảo host không trống
+      if (uri.host.isEmpty) {
+        print('Host trống trong URL: $cleanUrl');
+        return '';
+      }
+      return cleanUrl;
+    } catch (e) {
+      print('URL không hợp lệ: $e');
+      return '';
+    }
+  }
+
   /// Fetches detailed movie information based on slug/id
   Future<MovieDetailModel?> getMovieDetailV3(String slugOrId,
       {MovieModel? fallbackModel}) async {
@@ -717,6 +749,30 @@ class MovieApiService {
               }
             }
 
+            // Kiểm tra và làm sạch URLs trong episodes nếu có
+            if (jsonData['episodes'] != null && jsonData['episodes'] is List) {
+              for (var server in jsonData['episodes']) {
+                if (server is Map && server['server_data'] is List) {
+                  for (var episode in server['server_data']) {
+                    if (episode is Map) {
+                      // Làm sạch và kiểm tra URL m3u8
+                      if (episode['link_m3u8'] != null &&
+                          episode['link_m3u8'].toString().isNotEmpty) {
+                        episode['link_m3u8'] =
+                            cleanVideoUrl(episode['link_m3u8'].toString());
+                      }
+                      // Làm sạch và kiểm tra URL embed
+                      if (episode['link_embed'] != null &&
+                          episode['link_embed'].toString().isNotEmpty) {
+                        episode['link_embed'] =
+                            cleanVideoUrl(episode['link_embed'].toString());
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
             // Tạo MovieDetailModel trực tiếp từ dữ liệu JSON
             try {
               final detailModel = MovieDetailModel.fromJson({
@@ -733,6 +789,19 @@ class MovieApiService {
               print('Số lượng diễn viên: ${detailModel.movie.actor.length}');
               if (detailModel.movie.actor.isNotEmpty) {
                 print('Diễn viên đầu tiên: ${detailModel.movie.actor[0]}');
+              }
+
+              // Debug thông tin episodes
+              if (detailModel.episodes.isNotEmpty) {
+                print('Số lượng servers: ${detailModel.episodes.length}');
+                for (var server in detailModel.episodes) {
+                  print(
+                      'Server: ${server.serverName}, Số tập: ${server.serverData.length}');
+                  if (server.serverData.isNotEmpty) {
+                    print('Tập đầu tiên: ${server.serverData[0].name}');
+                    print('Link m3u8: ${server.serverData[0].linkM3u8}');
+                  }
+                }
               }
 
               return detailModel;

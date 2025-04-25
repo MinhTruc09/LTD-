@@ -122,14 +122,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       return '';
     }
 
+    // Loại bỏ khoảng trắng đầu cuối
+    String cleanUrl = url.trim();
+
     // Thêm schema nếu không có
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://$cleanUrl';
     }
 
     try {
-      Uri.parse(url); // Kiểm tra URL có thể parse được không
-      return url;
+      Uri uri = Uri.parse(cleanUrl);
+      // Đảm bảo host không trống
+      if (uri.host.isEmpty) {
+        print('Host trống trong URL: $cleanUrl');
+        return '';
+      }
+      // Kiểm tra xem đường dẫn có phải .m3u8 hay không
+      if (uri.path.toLowerCase().endsWith('.m3u8')) {
+        print('Đây là URL HLS (m3u8): $cleanUrl');
+      }
+      return cleanUrl;
     } catch (e) {
       print('URL không hợp lệ: $e');
       return '';
@@ -169,17 +181,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
 
     try {
-      // Thêm các headers phù hợp
+      // Thêm các headers phù hợp cho cả HTTP và HLS
       final Map<String, String> headers = {
         'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+            'Mozilla/5.0 (Android 10; Mobile; rv:88.0) Gecko/88.0 Firefox/88.0',
         'Referer': 'https://phimapi.com/',
         'Origin': 'https://phimapi.com',
+        'Connection': 'keep-alive',
+        'Accept': '*/*',
       };
 
       // Giải phóng controllers cũ nếu có
       _videoPlayerController?.dispose();
       _chewieController?.dispose();
+
+      // In URL để debug
+      print('Đang cố gắng phát video từ URL: $url');
 
       // Khởi tạo VideoPlayerController mới
       _videoPlayerController = VideoPlayerController.networkUrl(
@@ -187,6 +204,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         httpHeaders: headers,
         videoPlayerOptions: VideoPlayerOptions(
           mixWithOthers: false,
+          allowBackgroundPlayback: false, // Thêm tùy chọn này
         ),
       );
 
@@ -198,14 +216,36 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           setState(() {
             _hasError = true;
             _errorMessage =
-                'Lỗi phát video: ${_videoPlayerController!.value.errorDescription}';
+                'Lỗi phát video: ${_videoPlayerController!.value.errorDescription ?? "Không thể phát nội dung này"}';
             _isLoading = false;
           });
         }
       });
 
-      // Khởi tạo video player
-      await _videoPlayerController!.initialize();
+      // Khởi tạo video player với timeout
+      bool initializeSuccess = false;
+      try {
+        await _videoPlayerController!.initialize().timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw TimeoutException('Video khởi tạo quá lâu');
+          },
+        );
+        initializeSuccess = true;
+      } catch (timeoutError) {
+        print('Timeout khởi tạo video: $timeoutError');
+        setState(() {
+          _hasError = true;
+          _errorMessage =
+              'Thời gian tải video quá lâu. Vui lòng thử lại hoặc kiểm tra kết nối mạng.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      if (!initializeSuccess) {
+        return;
+      }
 
       // Sau khi khởi tạo thành công, tạo ChewieController
       _chewieController = ChewieController(
@@ -249,6 +289,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   style: TextStyle(color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _initializePlayer(_currentUrl),
+                  child: Text('Thử lại'),
+                ),
               ],
             ),
           );
@@ -274,18 +319,48 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
-  // Phương thức để chuyển tập phim
-  void _changeEpisode(int index) {
-    if (index >= 0 && index < _episodes.length) {
+  // Đổi episode bằng URL thay vì index, cho phép xác định lại máy chủ
+  void _changeEpisodeByUrl(String url, String name) {
+    if (url.isNotEmpty) {
       setState(() {
-        _currentEpisodeIndex = index;
+        _currentUrl = _validateAndProcessUrl(url);
+        // Reset trạng thái
+        _hasError = false;
+        _errorMessage = '';
       });
+      print('Đổi sang tập: $name với URL: $_currentUrl');
+      _initializePlayer(_currentUrl);
+    }
+  }
 
-      String url = _validateAndProcessUrl(_episodes[index]['url'] ?? '');
-      if (url.isNotEmpty) {
-        _currentUrl = url;
-        _initializePlayer(url);
+  // Thử phát từ server thay thế nếu có
+  void _tryAlternativeServer() {
+    // Chỉ thực hiện nếu có episodes
+    if (_episodes.isNotEmpty) {
+      // Tìm URL thay thế trong episodes hiện tại
+      int currentIndex = _currentEpisodeIndex;
+
+      // Thử tìm URL khác với định dạng khác
+      for (int i = 0; i < _episodes.length; i++) {
+        if (i != currentIndex &&
+            _episodes[i]['url'] != null &&
+            _episodes[i]['url']!.isNotEmpty) {
+          _changeEpisodeByUrl(
+              _episodes[i]['url']!, _episodes[i]['name'] ?? 'Tập khác');
+
+          setState(() {
+            _currentEpisodeIndex = i;
+          });
+
+          print('Đã thử máy chủ thay thế: ${_episodes[i]['name']}');
+          return;
+        }
       }
+
+      // Nếu không tìm thấy, thông báo cho người dùng
+      setState(() {
+        _errorMessage = 'Không tìm thấy máy chủ thay thế để phát video này.';
+      });
     }
   }
 
@@ -433,11 +508,32 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ElevatedButton(
               onPressed: () => _initializePlayer(_currentUrl),
               child: const Text('Thử lại'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            if (_episodes.length > 1)
+              ElevatedButton(
+                onPressed: _tryAlternativeServer,
+                child: const Text('Thử máy chủ khác'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                ),
+              ),
+            const SizedBox(height: 12),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Quay lại'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              ),
             ),
           ],
         ),
@@ -550,7 +646,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         final isSelected = index == _currentEpisodeIndex;
                         return ElevatedButton(
                           onPressed: () {
-                            _changeEpisode(index);
+                            _changeEpisodeByUrl(_episodes[index]['url']!,
+                                _episodes[index]['name'] ?? 'Tập ${index + 1}');
                             _toggleEpisodeSheet(); // Ẩn sheet sau khi chọn
                           },
                           style: ElevatedButton.styleFrom(
