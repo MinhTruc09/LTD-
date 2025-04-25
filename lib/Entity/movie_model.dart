@@ -74,4 +74,34 @@ class MovieModel {
       extraInfo: extraInfo ?? this.extraInfo,
     );
   }
+
+  // Thêm phương thức fromJson để sử dụng trong Favoritemovieservice
+  factory MovieModel.fromJson(Map<String, dynamic> json) {
+    return MovieModel(
+      id: json['id'] ?? '',
+      title: json['title'] ?? '',
+      imageUrl: json['imageUrl'] ?? '',
+      description: json['description'] ?? '',
+      category: json['category'] ?? '',
+      genres: json['genres'] != null ? List<String>.from(json['genres']) : [],
+      isFavorite: json['isFavorite'] ?? false,
+      year: json['year'] ?? '',
+      extraInfo: json['extraInfo'],
+    );
+  }
+
+  // Thêm phương thức toJson để sử dụng trong Favoritemovieservice
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'imageUrl': imageUrl,
+      'description': description,
+      'category': category,
+      'genres': genres,
+      'isFavorite': isFavorite,
+      'year': year,
+      'extraInfo': extraInfo,
+    };
+  }
 }

@@ -364,6 +364,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
+  // Phương thức để chuyển tập phim theo index (giữ lại để tương thích)
+  void _changeEpisode(int index) {
+    if (index >= 0 && index < _episodes.length) {
+      setState(() {
+        _currentEpisodeIndex = index;
+      });
+
+      String url = _validateAndProcessUrl(_episodes[index]['url'] ?? '');
+      if (url.isNotEmpty) {
+        _currentUrl = url;
+        _initializePlayer(_currentUrl);
+      }
+    }
+  }
+
   @override
   void dispose() {
     SystemChrome.setPreferredOrientations([
@@ -646,8 +661,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         final isSelected = index == _currentEpisodeIndex;
                         return ElevatedButton(
                           onPressed: () {
-                            _changeEpisodeByUrl(_episodes[index]['url']!,
-                                _episodes[index]['name'] ?? 'Tập ${index + 1}');
+                            _changeEpisode(index);
                             _toggleEpisodeSheet(); // Ẩn sheet sau khi chọn
                           },
                           style: ElevatedButton.styleFrom(
