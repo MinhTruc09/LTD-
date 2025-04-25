@@ -7,6 +7,7 @@ class MovieModel {
   final List<String> genres;
   final bool isFavorite;
   final String year;
+  final Map<String, dynamic>? extraInfo;
 
   MovieModel({
     required this.id,
@@ -17,6 +18,7 @@ class MovieModel {
     required this.genres,
     this.isFavorite = false,
     this.year = '',
+    this.extraInfo,
   });
 
   // Factory constructor để tạo MovieModel từ Map (Firebase)
@@ -30,6 +32,7 @@ class MovieModel {
       genres: List<String>.from(map['genres'] ?? []),
       isFavorite: map['isFavorite'] ?? false,
       year: map['year'] ?? '',
+      extraInfo: map['extraInfo'],
     );
   }
 
@@ -43,6 +46,7 @@ class MovieModel {
       'genres': genres,
       'isFavorite': isFavorite,
       'year': year,
+      'extraInfo': extraInfo,
     };
   }
 
@@ -56,6 +60,7 @@ class MovieModel {
     List<String>? genres,
     bool? isFavorite,
     String? year,
+    Map<String, dynamic>? extraInfo,
   }) {
     return MovieModel(
       id: id ?? this.id,
@@ -66,6 +71,7 @@ class MovieModel {
       genres: genres ?? this.genres,
       isFavorite: isFavorite ?? this.isFavorite,
       year: year ?? this.year,
+      extraInfo: extraInfo ?? this.extraInfo,
     );
   }
 }
