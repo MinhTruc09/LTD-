@@ -90,16 +90,24 @@ class _SignupScreenState extends State<SignupScreen>
     });
 
     try {
-      await _authController.signUp(
+      // Đăng ký user và lấy UID
+      final userCredential = await _authController.signUp(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+      final userId = userCredential.user?.uid;
 
+      if (userId == null) {
+        throw Exception('Failed to retrieve user ID after signup');
+      }
+
+      // Lưu thông tin user vào Firestore với UID làm ID
       await _userController.addUserDetails(
-        _firstNameController.text.trim(),
-        _lastNameController.text.trim(),
-        _emailController.text.trim(),
-        int.parse(_ageController.text.trim()),
+        userId: userId, // Truyền UID
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        age: int.parse(_ageController.text.trim()),
       );
 
       if (!mounted) return;
@@ -110,7 +118,7 @@ class _SignupScreenState extends State<SignupScreen>
             title: "Success",
             content: "Account created successfully! Please sign in.",
             actionText: "Sure!",
-            onActionPressed: widget.showLoginPage, // Gọi callback
+            onActionPressed: widget.showLoginPage,
           );
         },
       );
@@ -135,6 +143,18 @@ class _SignupScreenState extends State<SignupScreen>
             title: "Error",
             content: "Please enter a valid age",
             actionText: "Try again!",
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) {
+          return CustomAlertDialog(
+            title: "Error",
+            content: e.toString(),
+            actionText: "Oke",
           );
         },
       );
@@ -173,7 +193,6 @@ class _SignupScreenState extends State<SignupScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Header Section
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: HeaderSection(
@@ -183,8 +202,6 @@ class _SignupScreenState extends State<SignupScreen>
                         subtitle: 'Sign up',
                       ),
                     ),
-
-                    // Input Fields Container
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: Padding(
@@ -212,7 +229,7 @@ class _SignupScreenState extends State<SignupScreen>
                                     return 'Please enter your email';
                                   }
                                   final emailRegex =
-                                      RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                                  RegExp(r'^[^@]+@[^@]+\.[^@]+$');
                                   if (!emailRegex.hasMatch(value)) {
                                     return 'Please enter a valid email';
                                   }
@@ -290,23 +307,19 @@ class _SignupScreenState extends State<SignupScreen>
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                    // Sign Up Button
                     ScaleTransition(
                       scale: _scaleAnimation,
                       child: _isLoading
                           ? const CircularProgressIndicator(
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            )
+                        valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.white),
+                      )
                           : GradientButton(
-                              text: "Sign Up",
-                              onTap: signUp,
-                            ),
+                        text: "Sign Up",
+                        onTap: signUp,
+                      ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Sign In Link
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: Row(
@@ -319,8 +332,7 @@ class _SignupScreenState extends State<SignupScreen>
                             ),
                           ),
                           GestureDetector(
-                            onTap:
-                                widget.showLoginPage, // Gọi callback trực tiếp
+                            onTap: widget.showLoginPage,
                             child: Text(
                               "Sign in",
                               style: GoogleFonts.poppins(

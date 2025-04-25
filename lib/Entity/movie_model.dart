@@ -1,3 +1,7 @@
+// movie_model.dart
+import 'package:movieom_app/Entity/api_movie.dart';
+
+// MovieModel class
 class MovieModel {
   final String id;
   final String title;
@@ -21,7 +25,6 @@ class MovieModel {
     this.extraInfo,
   });
 
-  // Factory constructor để tạo MovieModel từ Map (Firebase)
   factory MovieModel.fromMap(Map<String, dynamic> map, String id) {
     return MovieModel(
       id: id,
@@ -36,7 +39,6 @@ class MovieModel {
     );
   }
 
-  // Phương thức chuyển đổi MovieModel thành Map (để lưu vào Firebase)
   Map<String, dynamic> toMap() {
     return {
       'title': title,
@@ -50,7 +52,6 @@ class MovieModel {
     };
   }
 
-  // Phương thức tạo bản sao với isFavorite được cập nhật
   MovieModel copyWith({
     String? id,
     String? title,
@@ -103,5 +104,26 @@ class MovieModel {
       'year': year,
       'extraInfo': extraInfo,
     };
+  }
+}
+
+// Extension để chuyển đổi từ ApiMovie sang MovieModel
+extension ApiMovieExtension on ApiMovie {
+  MovieModel toMovieModel() {
+    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    return MovieModel(
+      id: tempId,
+      title: title,
+      imageUrl: poster,
+      description: description,
+      category: category,
+      genres: genres,
+      isFavorite: false,
+      year: year,
+      extraInfo: {
+        'source': 'phimapi.com',
+        'fetchedAt': DateTime.now().toIso8601String(),
+      },
+    );
   }
 }

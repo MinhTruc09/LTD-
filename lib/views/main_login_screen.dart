@@ -79,7 +79,7 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                       child: ScaleTransition(
                         scale: _scaleAnimation,
                         child: GradientButton(
-                          text: "Đăng ký tài khoản",
+                          text: "Đăng nhập tài khoản",
                           onTap: () {
                             Navigator.push(
                               context,
@@ -125,7 +125,7 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                           );
                         },
                         child: Text(
-                          "Đăng nhập",
+                          "Đăng ký",
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             color: Colors.white,

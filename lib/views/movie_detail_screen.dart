@@ -1,3 +1,4 @@
+// lib/views/movie_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -126,20 +127,20 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       ),
       body: isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-              ),
-            )
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+        ),
+      )
           : errorMessage != null
-              ? Center(
-                  child: Text(
-                    errorMessage!,
-                    style: GoogleFonts.poppins(color: Colors.white),
-                  ),
-                )
-              : _buildMovieDetails(),
+          ? Center(
+        child: Text(
+          errorMessage!,
+          style: GoogleFonts.poppins(color: Colors.white),
+        ),
+      )
+          : _buildMovieDetails(),
       bottomNavigationBar:
-          isLoading || errorMessage != null ? null : _buildBottomActionBar(),
+      isLoading || errorMessage != null ? null : _buildBottomActionBar(),
     );
   }
 
@@ -275,12 +276,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           child: posterUrl.isNotEmpty
               ? _buildImage(posterUrl, double.infinity, 250)
               : const Center(
-                  child: Icon(
-                    Icons.movie,
-                    color: Colors.white38,
-                    size: 80,
-                  ),
-                ),
+            child: Icon(
+              Icons.movie,
+              color: Colors.white38,
+              size: 80,
+            ),
+          ),
         ),
         // Overlay gradient for better text visibility
         Positioned(
@@ -677,17 +678,17 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color:
-                        isSelected ? Colors.red.shade300 : Colors.transparent,
+                    isSelected ? Colors.red.shade300 : Colors.transparent,
                     width: 2,
                   ),
                   boxShadow: isSelected
                       ? [
-                          BoxShadow(
-                            color: Colors.red.withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          )
-                        ]
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    )
+                  ]
                       : null,
                 ),
                 child: Center(
@@ -696,7 +697,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      isSelected ? FontWeight.bold : FontWeight.normal,
                       fontSize: 13,
                     ),
                     textAlign: TextAlign.center,
@@ -718,19 +719,47 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     print('Link Embed: ${episode.linkEmbed}');
 
     try {
+      // Lấy danh sách tất cả các tập từ tất cả các server
+      final allEpisodes = movieDetail?.episodes
+          .asMap()
+          .entries
+          .map((entry) {
+        final serverIndex = entry.key;
+        final server = entry.value;
+        return server.serverData.asMap().entries.map((e) {
+          final episodeIndex = e.key;
+          final ep = e.value;
+          return {
+            'name': ep.name,
+            'link_m3u8': ep.linkM3u8,
+            'link_embed': ep.linkEmbed,
+            'server_index': serverIndex,
+            'episode_index': episodeIndex,
+          };
+        });
+      })
+          .expand((i) => i)
+          .toList() ??
+          [];
+
+      // Tìm index của tập hiện tại trong danh sách tất cả các tập
+      final currentEpisodeIndex = allEpisodes.indexWhere(
+            (e) =>
+        e['name'] == episode.name &&
+            e['link_m3u8'] == episode.linkM3u8 &&
+            e['link_embed'] == episode.linkEmbed,
+      );
+
+      if (currentEpisodeIndex == -1) {
+        print('Không tìm thấy tập trong danh sách allEpisodes!');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể xác định tập phim')),
+        );
+        return;
+      }
+
       // Ưu tiên link m3u8 để phát trong ứng dụng
       if (episode.linkM3u8.isNotEmpty) {
-        // Lấy danh sách tất cả các tập từ tất cả các server
-        final allEpisodes = movieDetail?.episodes
-                .map((server) => server.serverData)
-                .expand((i) => i)
-                .toList() ??
-            [];
-
-        // Tìm index của tập hiện tại trong danh sách tất cả các tập
-        final currentEpisodeIndex = allEpisodes.indexWhere(
-            (e) => e.name == episode.name && e.linkM3u8 == episode.linkM3u8);
-
         Navigator.pushNamed(
           context,
           '/video_player',
@@ -739,14 +768,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             'title': '${movieDetail?.movie.name} - ${episode.name}',
             'isEmbed': false,
             'm3u8Url': episode.linkM3u8, // Truyền m3u8Url riêng
-            'episodes': allEpisodes
-                .map((e) => {
-                      'name': e.name,
-                      'link_m3u8': e.linkM3u8,
-                    })
-                .toList(),
-            'currentEpisodeIndex':
-                currentEpisodeIndex > -1 ? currentEpisodeIndex : 0,
+            'episodes': allEpisodes,
+            'currentEpisodeIndex': currentEpisodeIndex,
           },
         );
       }
@@ -754,8 +777,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       else if (episode.linkEmbed.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text(
-                  'Phim này chỉ có link nhúng, chất lượng có thể không tốt')),
+            content: Text('Phim này chỉ có link nhúng, chất lượng có thể không tốt'),
+          ),
         );
         Navigator.pushNamed(
           context,
@@ -764,11 +787,13 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             'videoUrl': episode.linkEmbed,
             'title': '${movieDetail?.movie.name} - ${episode.name}',
             'isEmbed': true,
+            'episodes': allEpisodes,
+            'currentEpisodeIndex': currentEpisodeIndex,
           },
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không có link phim')),
+          const SnackBar(content: Text('Không có link phát cho tập phim này')),
         );
       }
     } catch (e) {
@@ -780,36 +805,56 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   void _handleWatchMovie() {
-    if (movieDetail != null && movieDetail!.hasEpisodes) {
-      try {
-        // Get episodes from selected server
-        if (_selectedServerIndex < movieDetail!.episodes.length &&
-            movieDetail!.episodes[_selectedServerIndex].serverData.isNotEmpty) {
-          final server = movieDetail!.episodes[_selectedServerIndex];
-          final episodeIndex = _selectedEpisodeIndex < server.serverData.length
-              ? _selectedEpisodeIndex
-              : 0;
-          final episode = server.serverData[episodeIndex];
-
-          // Play the selected episode
-          _playEpisode(episode);
-          return;
-        }
-      } catch (e) {
-        print('Error handling episodes: $e');
-      }
+    if (movieDetail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không có thông tin phim')),
+      );
+      return;
     }
 
-    // Fallback message if we can't play the movie
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chức năng xem phim sẽ được cập nhật sau')),
-    );
+    if (movieDetail!.hasEpisodes) {
+      try {
+        // Kiểm tra server và tập phim hợp lệ
+        if (_selectedServerIndex >= movieDetail!.episodes.length) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Server không hợp lệ')),
+          );
+          return;
+        }
+
+        final server = movieDetail!.episodes[_selectedServerIndex];
+        if (server.serverData.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Server này không có tập phim nào')),
+          );
+          return;
+        }
+
+        final episodeIndex = _selectedEpisodeIndex < server.serverData.length
+            ? _selectedEpisodeIndex
+            : 0;
+        final episode = server.serverData[episodeIndex];
+
+        // Phát tập phim đã chọn
+        _playEpisode(episode);
+      } catch (e) {
+        print('Error handling episodes: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi mở phim: $e')),
+        );
+      }
+    } else {
+      // Trường hợp không có tập phim (phim lẻ)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Chức năng xem phim lẻ sẽ được cập nhật sau')),
+      );
+    }
   }
 
   List<Widget> _buildCountryChips(List<Country> countries) {
     return List<Widget>.from(
       countries.map(
-        (country) => Chip(
+            (country) => Chip(
           label: Text(
             country.name,
             style: GoogleFonts.poppins(
@@ -886,7 +931,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     if (movieDetail != null && movieDetail!.hasGenres) {
       return List<Widget>.from(
         movieDetail!.movie.category.map(
-          (genre) => Chip(
+              (genre) => Chip(
             label: Text(
               genre.name,
               style: GoogleFonts.poppins(
@@ -902,7 +947,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     } else if (movie != null && movie!.genres.isNotEmpty) {
       return List<Widget>.from(
         movie!.genres.map(
-          (genre) => Chip(
+              (genre) => Chip(
             label: Text(
               genre,
               style: GoogleFonts.poppins(
@@ -1063,7 +1108,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             ),
                             backgroundColor: Colors.deepOrange.withOpacity(0.7),
                             materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
+                            MaterialTapTargetSize.shrinkWrap,
                           );
                         }).toList(),
                       ),
@@ -1113,7 +1158,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             ),
                             backgroundColor: Colors.blueGrey.withOpacity(0.7),
                             materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
+                            MaterialTapTargetSize.shrinkWrap,
                           );
                         }).toList(),
                       ),

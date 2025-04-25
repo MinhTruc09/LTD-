@@ -1,3 +1,4 @@
+// movie_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
@@ -7,6 +8,7 @@ import 'package:movieom_app/widgets/category_filter.dart';
 import 'package:movieom_app/widgets/featured_movie.dart';
 import 'package:movieom_app/widgets/genre_grid.dart';
 import 'package:movieom_app/widgets/movie_category_section.dart';
+import 'package:movieom_app/widgets/movieom_logo.dart';
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -19,13 +21,11 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   final MovieController _movieController = MovieController();
   final AuthController _authController = AuthController();
   List<MovieModel> _allMovies = [];
-  List<MovieModel> _apiMovies = []; // Phim từ API
-  List<Map<String, dynamic>> _genres = []; // Danh sách thể loại
-  List<MovieModel> _genreMovies = []; // Phim theo thể loại
+  List<MovieModel> _apiMovies = [];
+  List<Map<String, dynamic>> _genres = [];
+  List<MovieModel> _genreMovies = [];
 
-  // Map lưu phim theo thể loại
   Map<String, List<MovieModel>> _genreMoviesMap = {};
-  // Map lưu trạng thái loading cho từng thể loại
   Map<String, bool> _genreLoadingMap = {};
 
   bool _isLoading = true;
@@ -39,9 +39,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   ];
   String _selectedGenreName = '';
 
-  // Số lượng thể loại phim hiển thị trên màn hình chính
   final int _maxGenresOnHome = 5;
-  // Danh sách slug của các thể loại phổ biến để ưu tiên hiển thị
   final List<String> _popularGenreSlugs = [
     'hanh-dong',
     'tinh-cam',
@@ -63,10 +61,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     });
 
     try {
-      // Lấy phim từ API
       final apiMovies = await _movieController.getAllMoviesFromApi();
-
-      // Lấy phim mẫu nếu API không trả về dữ liệu
       final mockMovies = _movieController.getMockMovies();
 
       if (mounted) {
@@ -93,7 +88,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       if (mounted) {
         setState(() {
           _genres = genres;
-          // Sau khi load được thể loại, bắt đầu load phim theo thể loại
           _loadMoviesByGenres();
         });
       }
@@ -103,10 +97,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   }
 
   Future<void> _loadMoviesByGenres() async {
-    // Xác định danh sách thể loại sẽ được load
     List<Map<String, dynamic>> genresToLoad = [];
 
-    // Ưu tiên load các thể loại phổ biến trước
     for (var popularSlug in _popularGenreSlugs) {
       final genre = _genres.firstWhere((g) => g['slug'] == popularSlug,
           orElse: () => <String, dynamic>{});
@@ -115,28 +107,22 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       }
     }
 
-    // Nếu thể loại ưu tiên không đủ, lấy thêm từ danh sách thể loại
     if (genresToLoad.length < _maxGenresOnHome) {
       final remainingGenres = _genres
           .where((g) => !_popularGenreSlugs.contains(g['slug']))
           .take(_maxGenresOnHome - genresToLoad.length)
           .toList();
-
       genresToLoad.addAll(remainingGenres);
     }
 
-    // Giới hạn số lượng thể loại hiển thị
     genresToLoad = genresToLoad.take(_maxGenresOnHome).toList();
 
-    // Khởi tạo trạng thái loading cho tất cả thể loại
     for (var genre in genresToLoad) {
       _genreLoadingMap[genre['slug']] = true;
     }
 
-    // Cập nhật state để hiển thị trạng thái loading
     if (mounted) setState(() {});
 
-    // Load phim cho từng thể loại
     for (var genre in genresToLoad) {
       try {
         final slug = genre['slug'];
@@ -190,13 +176,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text(
-          'Movieom',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: MovieomLogo(),
         actions: [
           CircleAvatar(
             radius: 18,
@@ -217,7 +197,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             onCategorySelected: (category) {
               setState(() {
                 _selectedCategory = category;
-                // Reset selected genre when changing categories
                 if (category != 'Thể loại') {
                   _selectedGenreName = '';
                   _genreMovies = [];
@@ -229,30 +208,29 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-              ),
-            )
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+        ),
+      )
           : RefreshIndicator(
-              onRefresh: () async {
-                await _loadMovies();
-              },
-              color: const Color(0xFF3F54D1),
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hiển thị nội dung khác nhau tùy thuộc vào tab được chọn
-                      if (_selectedCategory == 'Thể loại')
-                        _buildGenreContent()
-                      else
-                        _buildMovieContent(),
-                    ],
-                  ),
-                ),
-              ),
+        onRefresh: () async {
+          await _loadMovies();
+        },
+        color: const Color(0xFF3F54D1),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_selectedCategory == 'Thể loại')
+                  _buildGenreContent()
+                else
+                  _buildMovieContent(),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -260,7 +238,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Hiển thị lưới thể loại với tất cả thể loại từ API
         if (_genres.isNotEmpty)
           GenreGrid(
             genres: _genres,
@@ -268,11 +245,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               _loadMoviesByGenre(slug, name);
             },
           ),
-
-        // Khoảng cách giữa grid và phim được chọn
         const SizedBox(height: 16),
-
-        // Hiển thị phim theo thể loại đã chọn
         if (_selectedGenreName.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(left: 16.0, top: 8.0, right: 16.0),
@@ -285,7 +258,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               ),
             ),
           ),
-
         if (_isLoadingGenreMovies)
           const Center(
             child: Padding(
@@ -315,21 +287,19 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             ),
           )
         else if (_selectedGenreName.isNotEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                'Không tìm thấy phim nào thuộc thể loại này',
-                style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 14,
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  'Không tìm thấy phim nào thuộc thể loại này',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
-          ),
-
-        // Thêm padding dưới cùng để tránh nội dung bị che khuất bởi navigation bar
         const SizedBox(height: 60),
       ],
     );
@@ -399,7 +369,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                    loadingProgress.expectedTotalBytes!
                     : null,
                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
               ),
@@ -418,7 +388,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         },
       );
     } else {
-      // Dùng container với icon thay vì image.asset
       return Container(
         color: Colors.grey[800],
         child: const Icon(
@@ -434,7 +403,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Featured Movie - Sử dụng phim từ API nếu có
         if (_apiMovies.isNotEmpty)
           FeaturedMovie(
             movie: _apiMovies[0],
@@ -446,8 +414,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               );
             },
           ),
-
-        // Thêm dấu gạch ngang phân cách ở phía trên Phim Mới Cập Nhật
         Padding(
           padding: const EdgeInsets.only(
               top: 16.0, bottom: 8.0, left: 16.0, right: 16.0),
@@ -456,14 +422,11 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             thickness: 1.0,
           ),
         ),
-
-        // API Movies Section
         if (_apiMovies.length > 1)
           MovieCategorySection(
             title: 'Phim Mới Cập Nhật',
             movies: _apiMovies.skip(1).take(10).toList(),
             onViewAll: () {
-              // Navigate to category view
               Navigator.pushNamed(
                 context,
                 '/category_movies',
@@ -474,8 +437,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               );
             },
           ),
-
-        // Thêm dấu gạch ngang phân cách
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Divider(
@@ -483,24 +444,17 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             thickness: 1.0,
           ),
         ),
-
-        // Hiển thị các thể loại phim được load từ API
         ..._buildGenreMovieSections(),
-
-        // Thêm padding phía dưới để tránh overflow
         const SizedBox(height: 80),
       ],
     );
   }
 
-  // Phương thức mới để tạo các section thể loại phim
   List<Widget> _buildGenreMovieSections() {
     List<Widget> sections = [];
 
-    // Ưu tiên hiển thị các thể loại phổ biến trước
     List<Map<String, dynamic>> orderedGenres = [];
 
-    // Thêm các thể loại phổ biến theo thứ tự đã định nghĩa
     for (var popularSlug in _popularGenreSlugs) {
       final genre = _genres.firstWhere((g) => g['slug'] == popularSlug,
           orElse: () => <String, dynamic>{});
@@ -509,7 +463,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       }
     }
 
-    // Thêm các thể loại còn lại
     for (var genre in _genres) {
       if (!_popularGenreSlugs.contains(genre['slug']) &&
           _genreMoviesMap.containsKey(genre['slug'])) {
@@ -517,22 +470,18 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       }
     }
 
-    // Giới hạn số lượng thể loại hiển thị
     orderedGenres = orderedGenres.take(_maxGenresOnHome).toList();
 
-    // Tạo section cho từng thể loại
     for (var i = 0; i < orderedGenres.length; i++) {
       final genre = orderedGenres[i];
       final slug = genre['slug'];
       final name = genre['name'];
 
-      // Loading section
       if (_genreLoadingMap[slug] == true) {
         sections.add(_buildLoadingSectionPlaceholder('Đang tải phim $name...'));
         continue;
       }
 
-      // Phim section nếu có data
       final movies = _genreMoviesMap[slug] ?? [];
       if (movies.isNotEmpty) {
         sections.add(MovieCategorySection(
@@ -550,11 +499,10 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           },
         ));
 
-        // Thêm dấu gạch ngang phân cách giữa các thể loại, trừ thể loại cuối cùng
         if (i < orderedGenres.length - 1) {
           sections.add(Padding(
             padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Divider(
               color: Colors.grey[800],
               thickness: 1.0,
@@ -592,7 +540,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                   strokeWidth: 2,
                 ),
               ),
-              // Container(width: 2, color: Colors.white)
             ],
           ),
         ),
