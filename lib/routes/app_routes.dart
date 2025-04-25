@@ -9,7 +9,6 @@ import 'package:movieom_app/views/splash_screen.dart';
 import 'package:movieom_app/views/home_screen.dart';
 import 'package:movieom_app/views/video_player_screen.dart';
 
-
 import '../views/search_screen.dart';
 
 final Map<String, WidgetBuilder> appRoutes = {
@@ -21,9 +20,9 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/movie_home': (context) => const MovieHomeScreen(),
   '/movie_detail': (context) => const MovieDetailScreen(),
   '/video_player': (context) => const VideoPlayerScreen(
-    videoUrl: '',
-    title: 'Movieom Player',
-  ),
+        videoUrl: '',
+        title: 'Movieom Player',
+      ),
   '/search': (context) => const SearchScreen(),
 };
 
@@ -58,7 +57,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
         title: args['title'] as String? ?? 'Movieom Player',
         isEmbed: args['isEmbed'] as bool? ?? false,
         m3u8Url: args['m3u8Url'] as String? ?? '',
-        episodes: args['episodes'] as List<Map<String, dynamic>>? ?? [],
+        episodes: args['episodes'] as List<Map<String, dynamic>>? ?? const [],
         currentEpisodeIndex: args['currentEpisodeIndex'] as int? ?? 0,
       );
       break;

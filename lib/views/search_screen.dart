@@ -2,10 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:movieom_app/Entity/api_movie.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
+import 'package:movieom_app/services/movie_api_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -26,6 +29,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   bool _isTyping = false;
   DateTime _lastTyped = DateTime.now();
+  final MovieApiService _apiService = MovieApiService();
 
   @override
   void initState() {
@@ -54,7 +58,8 @@ class _SearchScreenState extends State<SearchScreen> {
         final data = doc.data();
         return {
           'keyword': data['keyword'] ?? '',
-          'timestamp': (data['timestamp'] as Timestamp?)?.toDate().toString() ?? '',
+          'timestamp':
+              (data['timestamp'] as Timestamp?)?.toDate().toString() ?? '',
         };
       }).toList();
 
@@ -76,7 +81,8 @@ class _SearchScreenState extends State<SearchScreen> {
       final userId = user!.uid;
       print('Saving search history for User ID: $userId');
 
-      final userDocRef = FirebaseFirestore.instance.collection('users').doc(userId);
+      final userDocRef =
+          FirebaseFirestore.instance.collection('users').doc(userId);
       final userDoc = await userDocRef.get();
       if (!userDoc.exists) {
         await userDocRef.set({
@@ -124,7 +130,8 @@ class _SearchScreenState extends State<SearchScreen> {
         final data = jsonDecode(response.body);
         final searchResponse = ApiSearchResponse.fromJson(data);
         setState(() {
-          suggestions = searchResponse.movies.map((movie) => movie.title).toList();
+          suggestions =
+              searchResponse.movies.map((movie) => movie.title).toList();
           _isLoadingSuggestions = false;
         });
       } else {
@@ -162,23 +169,42 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     final url = Uri.parse(
-      'https://phimapi.com/v1/api/tim-kiem?keyword=$keyword&page=1&sort_field=_id&sort_type=asc&limit=10',
+      'https://phimapi.com/v1/api/tim-kiem?keyword=$keyword&page=1&sort_field=_id&sort_type=asc&limit=20',
     );
 
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final searchResponse = ApiSearchResponse.fromJson(data);
-        setState(() {
-          movies = searchResponse.movies;
-          _isLoadingMovies = false;
-        });
 
-        await _saveSearchHistory(keyword);
+        // Check if response matches expected format
+        if (data['status'] == 'success' &&
+            data['data'] != null &&
+            data['data']['items'] != null) {
+          final searchResponse = ApiSearchResponse.fromJson(data);
+
+          setState(() {
+            movies = searchResponse.movies;
+            _isLoadingMovies = false;
+          });
+
+          print(
+              'Loaded ${movies.length} movies, title page: ${searchResponse.titlePage}');
+          if (movies.isNotEmpty) {
+            print('First movie: ${movies[0].title}, slug: ${movies[0].slug}');
+          }
+
+          await _saveSearchHistory(keyword);
+        } else {
+          setState(() {
+            _errorMessage = 'Không thể tải dữ liệu. Định dạng không hợp lệ.';
+            _isLoadingMovies = false;
+          });
+        }
       } else {
         setState(() {
-          _errorMessage = 'Không thể tải dữ liệu. Mã lỗi: ${response.statusCode}';
+          _errorMessage =
+              'Không thể tải dữ liệu. Mã lỗi: ${response.statusCode}';
           _isLoadingMovies = false;
         });
       }
@@ -202,121 +228,658 @@ class _SearchScreenState extends State<SearchScreen> {
           _isTyping = false;
         });
         fetchMovies(value);
-        fetchSuggestions(value);
       }
     });
   }
 
+  Future<void> _navigateToMovieDetail(ApiMovie movie) async {
+    final movieModel = movie.toMovieModel();
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Đang tải dữ liệu phim...',
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      // Use the slug to get full movie details
+      String movieSlug = movie.slug.isNotEmpty ? movie.slug : movie.id;
+      print('Loading movie details for slug: $movieSlug');
+
+      final movieDetailResult = await _apiService.getMovieDetailV3(
+        movieSlug,
+        fallbackModel: movieModel,
+      );
+
+      // Close loading dialog
+      Navigator.of(context, rootNavigator: true).pop();
+
+      if (movieDetailResult != null) {
+        print('Movie detail loaded: ${movieDetailResult.movie.name}');
+
+        // Create a more complete movie model from the movie detail
+        final enhancedMovieModel = MovieModel(
+          id: movieModel.id,
+          title: movieDetailResult.movie.name,
+          imageUrl: movieDetailResult.movie.posterUrl,
+          description: movieDetailResult.movie.content,
+          category: movieDetailResult.movie.status,
+          genres:
+              movieDetailResult.movie.category.map((cat) => cat.name).toList(),
+          year: movieDetailResult.movie.year.toString(),
+          isFavorite: false,
+          extraInfo: {
+            'slug': movie.slug,
+            'origin_name': movieDetailResult.movie.originName,
+            'quality': movieDetailResult.movie.quality,
+            'time': movieDetailResult.movie.time,
+            'episode_current': movieDetailResult.movie.episodeCurrent,
+            'episode_total': movieDetailResult.movie.episodeTotal,
+            'lang': movieDetailResult.movie.lang,
+            'type': movieDetailResult.movie.type,
+            'hasEpisodes': movieDetailResult.hasEpisodes,
+          },
+        );
+
+        // Always navigate to movie detail screen as requested
+        Navigator.pushNamed(
+          context,
+          '/movie_detail',
+          arguments: enhancedMovieModel,
+        );
+      } else {
+        print('Failed to get movie details, using basic model');
+        // Fallback to normal movie detail navigation with basic model
+        Navigator.pushNamed(
+          context,
+          '/movie_detail',
+          arguments: movieModel,
+        );
+      }
+    } catch (e) {
+      print('Error loading movie details: $e');
+
+      // Close loading dialog
+      Navigator.of(context, rootNavigator: true).pop();
+
+      // Show error and navigate to regular movie detail
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không thể tải chi tiết phim: $e')),
+      );
+
+      Navigator.pushNamed(
+        context,
+        '/movie_detail',
+        arguments: movieModel,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextField(
-            controller: _controller,
-            onChanged: _onSearchChanged,
-            decoration: const InputDecoration(
-              hintText: "Tìm kiếm phim...",
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-            ),
-          ),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
-        if (_isLoadingHistory)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(),
-          ),
-        if (searchHistory.isNotEmpty && !_isTyping && movies.isEmpty)
-          Container(
-            height: 100,
-            child: ListView.builder(
-              itemCount: searchHistory.length,
-              itemBuilder: (context, index) {
-                final history = searchHistory[index];
-                return ListTile(
-                  title: Text(history['keyword']),
-                  subtitle: Text('Tìm kiếm lúc: ${history['timestamp']}'),
-                  onTap: () {
-                    _controller.text = history['keyword'];
-                    _onSearchChanged(history['keyword']);
-                  },
-                );
-              },
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Logo with smaller size
+            Container(
+              height: 24,
+              width: 24,
+              margin: const EdgeInsets.only(right: 8),
+              child: Image.asset(
+                'assets/images/logo.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.movie, color: Colors.white, size: 20);
+                },
+              ),
             ),
-          ),
-        if (_isLoadingSuggestions && _isTyping)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(),
-          ),
-        if (suggestions.isNotEmpty && _isTyping)
-          Container(
-            height: 150,
-            child: ListView.builder(
-              itemCount: suggestions.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(suggestions[index]),
-                  onTap: () {
-                    _controller.text = suggestions[index];
-                    _onSearchChanged(suggestions[index]);
-                  },
-                );
-              },
-            ),
-          ),
-        Expanded(
-          child: _isLoadingMovies
-              ? const Center(child: CircularProgressIndicator())
-              : _errorMessage.isNotEmpty
-              ? Center(child: Text(_errorMessage))
-              : movies.isEmpty
-              ? const Center(child: Text('Không tìm thấy phim nào!'))
-              : ListView.builder(
-            itemCount: movies.length,
-            itemBuilder: (context, index) {
-              final movie = movies[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(
-                    vertical: 5, horizontal: 10),
-                child: ListTile(
-                  leading: movie.poster.isNotEmpty
-                      ? Image.network(
-                    movie.poster,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                    errorBuilder:
-                        (context, error, stackTrace) =>
-                    const Icon(Icons.movie),
-                  )
-                      : const Icon(Icons.movie),
-                  title: Text(
-                    movie.title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    'Năm: ${movie.year.isNotEmpty ? movie.year : 'N/A'} - Thể loại: ${movie.title}', // Dùng title làm thể loại
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward),
-                  onTap: () {
-                    final movieModel = movie.toMovieModel();
-                    Navigator.pushNamed(
-                      context,
-                      '/movie_detail',
-                      arguments: movieModel,
-                    );
-                  },
+            Flexible(
+              child: Text(
+                movies.isNotEmpty && _controller.text.isNotEmpty
+                    ? 'Kết quả tìm kiếm: ${_controller.text}'
+                    : 'Tìm kiếm phim',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-              );
-            },
-          ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
-      ],
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          // Search bar with gradient border
+          Container(
+            margin: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withOpacity(0.3),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                )
+              ],
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade800, Colors.purple.shade800],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            padding: const EdgeInsets.all(1.5),
+            child: TextField(
+              controller: _controller,
+              onChanged: _onSearchChanged,
+              style: GoogleFonts.poppins(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Tìm kiếm phim...",
+                hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400),
+                prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                suffixIcon: _controller.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white70),
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() {
+                            movies = [];
+                            suggestions = [];
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.grey.shade900,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+
+          // Loading indicators
+          if (_isLoadingHistory)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+
+          // Search history
+          if (searchHistory.isNotEmpty && !_isTyping && movies.isEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade900,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              height: 160,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Lịch sử tìm kiếm',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              searchHistory = [];
+                            });
+                          },
+                          child: Text(
+                            'Xóa tất cả',
+                            style: GoogleFonts.poppins(
+                              color: Colors.blue,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: searchHistory.length,
+                      itemBuilder: (context, index) {
+                        final history = searchHistory[index];
+                        return ListTile(
+                          dense: true,
+                          leading:
+                              const Icon(Icons.history, color: Colors.grey),
+                          title: Text(
+                            history['keyword'],
+                            style: GoogleFonts.poppins(color: Colors.white),
+                          ),
+                          onTap: () {
+                            _controller.text = history['keyword'];
+                            _onSearchChanged(history['keyword']);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Suggestions while typing
+          if (_isLoadingSuggestions && _isTyping)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: CircularProgressIndicator(),
+            ),
+          if (suggestions.isNotEmpty && _isTyping)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade900,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              height: 150,
+              child: ListView.builder(
+                itemCount: suggestions.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: const Icon(Icons.search, color: Colors.grey),
+                    title: Text(
+                      suggestions[index],
+                      style: GoogleFonts.poppins(color: Colors.white),
+                    ),
+                    onTap: () {
+                      _controller.text = suggestions[index];
+                      _onSearchChanged(suggestions[index]);
+                    },
+                  );
+                },
+              ),
+            ),
+
+          // Search results
+          Expanded(
+            child: _isLoadingMovies
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.blue),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Đang tìm kiếm...',
+                          style: GoogleFonts.poppins(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  )
+                : _errorMessage.isNotEmpty
+                    ? Center(
+                        child: Text(
+                          _errorMessage,
+                          style: GoogleFonts.poppins(color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    : movies.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search,
+                                  size: 80,
+                                  color: Colors.blue.withOpacity(0.5),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _controller.text.isEmpty
+                                      ? 'Nhập từ khóa để tìm kiếm phim'
+                                      : 'Không tìm thấy kết quả nào',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.all(12),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio:
+                                  0.58, // Taller cards for more info
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
+                            itemCount: movies.length,
+                            itemBuilder: (context, index) {
+                              final movie = movies[index];
+
+                              // Extract data from extraInfo if available
+                              final extraInfo =
+                                  movie.toMovieModel().extraInfo ?? {};
+                              final bool isSeries = movie.category
+                                      .toLowerCase()
+                                      .contains('hoàn tất') ||
+                                  (extraInfo['episode_current']?.toString() ??
+                                          '')
+                                      .isNotEmpty;
+                              final String episodeInfo =
+                                  extraInfo['episode_current']?.toString() ??
+                                      '';
+                              final String quality =
+                                  extraInfo['quality']?.toString() ?? '';
+                              final String language =
+                                  extraInfo['lang']?.toString() ?? '';
+
+                              return GestureDetector(
+                                onTap: () => _navigateToMovieDetail(movie),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade900,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        spreadRadius: 1,
+                                        blurRadius: 5,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Movie poster
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(12),
+                                            topRight: Radius.circular(12),
+                                          ),
+                                          child: Stack(
+                                            fit: StackFit.expand,
+                                            children: [
+                                              movie.poster.isNotEmpty
+                                                  ? Image.network(
+                                                      movie.poster.startsWith(
+                                                              'http')
+                                                          ? movie.poster
+                                                          : 'https://phimimg.com/${movie.poster}',
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                              error,
+                                                              stackTrace) =>
+                                                          Container(
+                                                        color: Colors
+                                                            .grey.shade800,
+                                                        child: const Icon(
+                                                          Icons.movie,
+                                                          color: Colors.white54,
+                                                          size: 50,
+                                                        ),
+                                                      ),
+                                                      loadingBuilder: (context,
+                                                          child,
+                                                          loadingProgress) {
+                                                        if (loadingProgress ==
+                                                            null) return child;
+                                                        return Center(
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                            value: loadingProgress
+                                                                        .expectedTotalBytes !=
+                                                                    null
+                                                                ? loadingProgress
+                                                                        .cumulativeBytesLoaded /
+                                                                    loadingProgress
+                                                                        .expectedTotalBytes!
+                                                                : null,
+                                                            valueColor:
+                                                                const AlwaysStoppedAnimation<
+                                                                        Color>(
+                                                                    Colors
+                                                                        .blue),
+                                                          ),
+                                                        );
+                                                      },
+                                                    )
+                                                  : Container(
+                                                      color:
+                                                          Colors.grey.shade800,
+                                                      child: const Icon(
+                                                        Icons.movie,
+                                                        color: Colors.white54,
+                                                        size: 50,
+                                                      ),
+                                                    ),
+                                              // Play icon overlay
+                                              Positioned.fill(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    gradient: LinearGradient(
+                                                      begin:
+                                                          Alignment.topCenter,
+                                                      end: Alignment
+                                                          .bottomCenter,
+                                                      colors: [
+                                                        Colors.transparent,
+                                                        Colors.black
+                                                            .withOpacity(0.7),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  child: Center(
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white
+                                                            .withOpacity(0.2),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.play_arrow,
+                                                        color: Colors.white,
+                                                        size: 30,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              // Year tag
+                                              if (movie.year.isNotEmpty)
+                                                Positioned(
+                                                  top: 8,
+                                                  right: 8,
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.blue
+                                                          .withOpacity(0.8),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                    ),
+                                                    child: Text(
+                                                      movie.year,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                              // Quality tag
+                                              if (quality.isNotEmpty)
+                                                Positioned(
+                                                  bottom: 8,
+                                                  left: 8,
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red
+                                                          .withOpacity(0.8),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                    ),
+                                                    child: Text(
+                                                      quality,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+
+                                              // Language tag
+                                              if (language.isNotEmpty)
+                                                Positioned(
+                                                  bottom: 8,
+                                                  right: 8,
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.green
+                                                          .withOpacity(0.8),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4),
+                                                    ),
+                                                    child: Text(
+                                                      language,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                        color: Colors.white,
+                                                        fontSize: 10,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      // Movie title and info
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              movie.title,
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            if (episodeInfo.isNotEmpty)
+                                              Text(
+                                                episodeInfo,
+                                                style: GoogleFonts.poppins(
+                                                  color: Colors.grey.shade400,
+                                                  fontSize: 10,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+          ),
+        ],
+      ),
     );
   }
 }

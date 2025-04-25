@@ -1,4 +1,3 @@
-// lib/views/video_player_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -35,6 +34,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   bool _hasError = false;
   String _errorMessage = '';
   String _currentUrl = '';
+  bool _initialized = false;
 
   // Danh sách các tập phim
   List<Map<String, String>> _episodes = [];
@@ -44,35 +44,85 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _processVideoData();
+    // Không gọi _processVideoData ở đây
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Chỉ xử lý một lần sau khi widget được gắn vào cây
+    if (!_initialized) {
+      _initialized = true;
+      // Gọi _processVideoData trực tiếp ở đây, không cần addPostFrameCallback
+      _processVideoData();
+    }
   }
 
   void _processVideoData() {
     // Xử lý URL từ đầu vào
     String url = widget.m3u8Url.isNotEmpty ? widget.m3u8Url : widget.videoUrl;
 
-    // Chuyển đổi danh sách tập phim từ widget.episodes
-    if (widget.episodes.isNotEmpty) {
-      for (var ep in widget.episodes) {
-        if (ep is Map &&
-            ep.containsKey('link_m3u8') &&
-            ep.containsKey('name')) {
-          _episodes.add({
-            'url': ep['link_m3u8'].toString(),
-            'name': ep['name'].toString(),
-          });
+    // Lấy thông tin từ arguments nếu có
+    final Map<String, dynamic>? args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    if (args != null) {
+      // Lấy danh sách tập phim nếu có
+      if (args.containsKey('episodes') && args['episodes'] is List) {
+        final episodesList = args['episodes'] as List;
+        for (var ep in episodesList) {
+          if (ep is Map &&
+              ep.containsKey('link_m3u8') &&
+              ep.containsKey('name')) {
+            _episodes.add({
+              'url': ep['link_m3u8'].toString(),
+              'name': ep['name'].toString(),
+            });
+          }
+        }
+        print('Đã tải ${_episodes.length} tập phim');
+
+        // Thiết lập tập hiện tại từ arguments nếu có
+        if (args.containsKey('currentEpisodeIndex') &&
+            args['currentEpisodeIndex'] is int &&
+            _episodes.isNotEmpty) {
+          final index = args['currentEpisodeIndex'] as int;
+          if (index >= 0 && index < _episodes.length) {
+            _currentEpisodeIndex = index;
+            print('Sử dụng tập phim index: $_currentEpisodeIndex');
+          }
         }
       }
-      print('Đã tải ${_episodes.length} tập phim');
 
-      // Thiết lập tập hiện tại
-      if (widget.currentEpisodeIndex >= 0 &&
-          widget.currentEpisodeIndex < _episodes.length) {
-        _currentEpisodeIndex = widget.currentEpisodeIndex;
-        print('Sử dụng tập phim index: $_currentEpisodeIndex');
-      } else {
-        _currentEpisodeIndex = 0;
-        print('Index không hợp lệ, sử dụng tập đầu tiên');
+      // Ưu tiên sử dụng m3u8Url nếu được truyền vào
+      if (args.containsKey('m3u8Url') &&
+          args['m3u8Url'] != null &&
+          args['m3u8Url'].toString().isNotEmpty) {
+        url = args['m3u8Url'].toString();
+        print('Sử dụng m3u8Url từ arguments: $url');
+      }
+    } else {
+      // Nếu không có arguments, sử dụng thông tin từ widget props
+      if (widget.episodes.isNotEmpty) {
+        for (var ep in widget.episodes) {
+          if (ep is Map &&
+              ep.containsKey('link_m3u8') &&
+              ep.containsKey('name')) {
+            _episodes.add({
+              'url': ep['link_m3u8'].toString(),
+              'name': ep['name'].toString(),
+            });
+          }
+        }
+        print('Đã tải ${_episodes.length} tập phim từ widget props');
+
+        // Thiết lập tập hiện tại
+        if (widget.currentEpisodeIndex >= 0 &&
+            widget.currentEpisodeIndex < _episodes.length) {
+          _currentEpisodeIndex = widget.currentEpisodeIndex;
+          print('Sử dụng tập phim index từ props: $_currentEpisodeIndex');
+        }
       }
     }
 
@@ -161,12 +211,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     try {
       // Thêm các headers phù hợp cho cả HTTP và HLS
       final Map<String, String> headers = {
-        'User-Agent':
-<<<<<<< HEAD
-            'Mozilla/5.0 (Android 10; Mobile; rv:88.0) Gecko/88.0 Firefox/88.0',
-=======
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
->>>>>>> origin/truc
+        'User-Agent': Platform.isIOS
+            ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
+            : 'Mozilla/5.0 (Android 10; Mobile; rv:88.0) Gecko/88.0 Firefox/88.0',
         'Referer': 'https://phimapi.com/',
         'Origin': 'https://phimapi.com',
         'Connection': 'keep-alive',
@@ -198,11 +245,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           setState(() {
             _hasError = true;
             _errorMessage =
-<<<<<<< HEAD
                 'Lỗi phát video: ${_videoPlayerController!.value.errorDescription ?? "Không thể phát nội dung này"}';
-=======
-            'Lỗi phát video: ${_videoPlayerController!.value.errorDescription}';
->>>>>>> origin/truc
             _isLoading = false;
           });
         }
@@ -275,10 +318,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   style: const TextStyle(color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => _initializePlayer(_currentUrl),
-                  child: Text('Thử lại'),
+                  child: const Text('Thử lại'),
                 ),
               ],
             ),
@@ -360,17 +403,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       String url = _validateAndProcessUrl(_episodes[index]['url'] ?? '');
       if (url.isNotEmpty) {
         _currentUrl = url;
-<<<<<<< HEAD
         _initializePlayer(_currentUrl);
-=======
-        _initializePlayer(url);
-      } else {
-        setState(() {
-          _hasError = true;
-          _errorMessage = 'Không có URL hợp lệ cho tập này';
-          _isLoading = false;
-        });
->>>>>>> origin/truc
       }
     }
   }
@@ -390,15 +423,21 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Phân tích tiêu đề thành tên phim
-    String movieTitle = widget.title.contains('-')
-        ? widget.title.split('-')[0].trim()
-        : widget.title;
+    // Phân tích tiêu đề thành tên phim và tập
+    String movieTitle = 'Đang xem';
+    String episodeTitle = '';
 
-    // Lấy tiêu đề tập từ _episodes nếu có
-    String episodeTitle = _episodes.isNotEmpty
-        ? _episodes[_currentEpisodeIndex]['name'] ?? ''
-        : '';
+    if (widget.title.contains('-')) {
+      final parts = widget.title.split('-');
+      if (parts.length >= 2) {
+        movieTitle = parts[0].trim();
+        episodeTitle = parts[1].trim();
+      } else {
+        movieTitle = widget.title;
+      }
+    } else {
+      movieTitle = widget.title;
+    }
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -413,7 +452,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: 16, // Giảm kích thước để tránh tràn
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -433,78 +472,44 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       ),
       body: Stack(
         children: [
-          // Phần trình phát video và điều khiển tập
+          // Phần trình phát video
           Column(
             children: [
               Expanded(
                 child: _isLoading
                     ? const Center(
-                  child: CircularProgressIndicator(
-                    valueColor:
-                    AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
                     : _hasError
-                    ? _buildErrorWidget()
-                    : _chewieController != null
-                    ? Chewie(controller: _chewieController!)
-                    : const Center(
-                  child: Text(
-                    'Không thể khởi tạo trình phát',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
+                        ? _buildErrorWidget()
+                        : _chewieController != null
+                            ? Chewie(controller: _chewieController!)
+                            : const Center(
+                                child: Text(
+                                  'Không thể khởi tạo trình phát',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
               ),
 
-              // Nút Tập trước và Tập sau (nếu có danh sách tập)
-              if (_episodes.length > 1)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _currentEpisodeIndex > 0
-                            ? () => _changeEpisode(_currentEpisodeIndex - 1)
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _currentEpisodeIndex > 0
-                              ? Colors.blue
-                              : Colors.grey.shade700,
-                        ),
-                        child: const Text('Tập trước'),
-                      ),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed:
-                        _currentEpisodeIndex < _episodes.length - 1
-                            ? () => _changeEpisode(_currentEpisodeIndex + 1)
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                          _currentEpisodeIndex < _episodes.length - 1
-                              ? Colors.blue
-                              : Colors.grey.shade700,
-                        ),
-                        child: const Text('Tập sau'),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Thanh nhỏ hiển thị tập đang xem (luôn hiển thị nếu có danh sách tập)
+              // Thanh nhỏ hiển thị tập đang xem (luôn hiển thị)
               if (_episodes.length > 1)
                 InkWell(
                   onTap: () => _toggleEpisodeSheet(),
                   child: Container(
                     padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                     color: Colors.black87,
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
-                            'Đang xem: $episodeTitle',
+                            episodeTitle.isNotEmpty
+                                ? 'Đang xem: $episodeTitle'
+                                : 'Đang xem: ${_episodes[_currentEpisodeIndex]['name']}',
                             style: const TextStyle(
                                 color: Colors.white, fontSize: 14),
                           ),
@@ -594,6 +599,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Widget _buildDraggableEpisodeSheet() {
     if (!_showEpisodeSheet) return const SizedBox.shrink();
 
+    // Phân tích tiêu đề giống như trong build
+    String localEpisodeTitle = '';
+    if (widget.title.contains('-')) {
+      final parts = widget.title.split('-');
+      if (parts.length >= 2) {
+        localEpisodeTitle = parts[1].trim();
+      }
+    }
+
     return GestureDetector(
       onVerticalDragEnd: (details) {
         if (details.primaryVelocity! > 0) {
@@ -649,7 +663,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   const SizedBox(height: 8),
 
                   Text(
-                    'Đang xem: ${_episodes[_currentEpisodeIndex]['name']}',
+                    localEpisodeTitle.isNotEmpty
+                        ? 'Đang xem: $localEpisodeTitle'
+                        : 'Đang xem: ${_episodes[_currentEpisodeIndex]['name']}',
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -663,7 +679,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     child: GridView.builder(
                       controller: scrollController,
                       gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
                         childAspectRatio: 2.0,
                         crossAxisSpacing: 8,
@@ -674,12 +690,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         final isSelected = index == _currentEpisodeIndex;
                         return ElevatedButton(
                           onPressed: () {
-                            _changeEpisode(index);
+                            _changeEpisodeByUrl(_episodes[index]['url']!,
+                                _episodes[index]['name'] ?? 'Tập ${index + 1}');
                             _toggleEpisodeSheet(); // Ẩn sheet sau khi chọn
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                            isSelected ? Colors.red : Colors.grey.shade800,
+                                isSelected ? Colors.red : Colors.grey.shade800,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),

@@ -176,19 +176,16 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: MovieomLogo(),
-        actions: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.white,
-            child: Icon(
-              Icons.person,
-              color: Colors.black,
-              size: 24,
-            ),
+        automaticallyImplyLeading: false,
+        title: SizedBox(
+          height: 48,
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: MovieomLogo(fontSize: 32),
           ),
-          const SizedBox(width: 16),
-        ],
+        ),
+        titleSpacing: 0,
+        centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(50),
           child: CategoryFilter(
@@ -208,29 +205,29 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       ),
       body: _isLoading
           ? const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-        ),
-      )
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+              ),
+            )
           : RefreshIndicator(
-        onRefresh: () async {
-          await _loadMovies();
-        },
-        color: const Color(0xFF3F54D1),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_selectedCategory == 'Thể loại')
-                  _buildGenreContent()
-                else
-                  _buildMovieContent(),
-              ],
+              onRefresh: () async {
+                await _loadMovies();
+              },
+              color: const Color(0xFF3F54D1),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_selectedCategory == 'Thể loại')
+                        _buildGenreContent()
+                      else
+                        _buildMovieContent(),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -287,19 +284,19 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             ),
           )
         else if (_selectedGenreName.isNotEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  'Không tìm thấy phim nào thuộc thể loại này',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                'Không tìm thấy phim nào thuộc thể loại này',
+                style: GoogleFonts.poppins(
+                  color: Colors.white70,
+                  fontSize: 14,
                 ),
+                textAlign: TextAlign.center,
               ),
             ),
+          ),
         const SizedBox(height: 60),
       ],
     );
@@ -369,7 +366,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                    loadingProgress.expectedTotalBytes!
+                        loadingProgress.expectedTotalBytes!
                     : null,
                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
               ),
@@ -502,7 +499,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         if (i < orderedGenres.length - 1) {
           sections.add(Padding(
             padding:
-            const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Divider(
               color: Colors.grey[800],
               thickness: 1.0,

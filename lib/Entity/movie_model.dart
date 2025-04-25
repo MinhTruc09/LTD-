@@ -110,9 +110,10 @@ class MovieModel {
 // Extension để chuyển đổi từ ApiMovie sang MovieModel
 extension ApiMovieExtension on ApiMovie {
   MovieModel toMovieModel() {
-    final tempId = DateTime.now().millisecondsSinceEpoch.toString();
+    String movieId =
+        id.isNotEmpty ? id : DateTime.now().millisecondsSinceEpoch.toString();
     return MovieModel(
-      id: tempId,
+      id: movieId,
       title: title,
       imageUrl: poster,
       description: description,
@@ -123,6 +124,13 @@ extension ApiMovieExtension on ApiMovie {
       extraInfo: {
         'source': 'phimapi.com',
         'fetchedAt': DateTime.now().toIso8601String(),
+        'slug': slug,
+        'quality': quality,
+        'lang': lang,
+        'episode_current': episodeCurrent,
+        'type': type,
+        'origin_name': originName,
+        'time': time,
       },
     );
   }
