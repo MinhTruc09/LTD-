@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const MainLoginScreen()),
-            (route) => false,
+        (route) => false,
       );
     } catch (e) {
       if (mounted) {
@@ -86,7 +86,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 10),
 
               // Ảnh đại diện
-              Image.asset('assets/images/userlogo.png',height: 90,),
+              Image.asset(
+                'assets/images/userlogo.png',
+                height: 90,
+              ),
 
               const SizedBox(height: 10),
 

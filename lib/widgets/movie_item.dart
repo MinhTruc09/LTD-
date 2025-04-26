@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
+import 'package:movieom_app/services/favoritemovieservice.dart';
 
-class MovieItem extends StatelessWidget {
+class MovieItem extends StatefulWidget {
   final MovieModel movie;
   final double width;
   final VoidCallback? onTap;
@@ -15,156 +17,219 @@ class MovieItem extends StatelessWidget {
   });
 
   @override
+  State<MovieItem> createState() => _MovieItemState();
+}
+
+class _MovieItemState extends State<MovieItem> {
+  bool _isFavorite = false;
+  bool _isCheckingFavorite = true;
+  late Favoritemovieservice _favoriteService;
+  final AuthController _authController = AuthController();
+
+  @override
+  void initState() {
+    super.initState();
+    _initUser();
+  }
+
+  Future<void> _initUser() async {
+    try {
+      final userId = await _authController.getCurrentUserId() ?? 'guest';
+      _favoriteService = Favoritemovieservice(userId);
+
+      // Kiểm tra trạng thái yêu thích
+      _checkFavoriteStatus();
+    } catch (e) {
+      print('Error initializing user in MovieItem: $e');
+      _favoriteService = Favoritemovieservice('guest');
+      setState(() {
+        _isCheckingFavorite = false;
+      });
+    }
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    try {
+      // Kiểm tra theo ID
+      bool isFavorite = await _favoriteService.isMovieFavorite(widget.movie.id);
+
+      // Nếu không tìm thấy theo ID, thử kiểm tra bằng slug nếu có
+      if (!isFavorite &&
+          widget.movie.extraInfo != null &&
+          widget.movie.extraInfo!.containsKey('slug')) {
+        final slug = widget.movie.extraInfo!['slug'];
+        if (slug != null && slug is String && slug.isNotEmpty) {
+          isFavorite = await _favoriteService.isMovieFavorite(slug);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = isFavorite;
+          _isCheckingFavorite = false;
+        });
+      }
+    } catch (e) {
+      print('Error checking favorite status: $e');
+      if (mounted) {
+        setState(() {
+          _isCheckingFavorite = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Tính toán chiều cao tối đa cho mỗi component
-    final double imageHeight = width * 1.3; // Giảm chiều cao poster
+    final double imageHeight =
+        widget.width * 1.3; // Giảm chiều cao poster từ 1.3 xuống 1.1
     final double titleHeight = 14.0;
     final double descHeight =
-        movie.year.isNotEmpty || movie.description.isNotEmpty ? 10.0 : 0.0;
+        widget.movie.year.isNotEmpty || widget.movie.description.isNotEmpty
+            ? 10.0
+            : 0.0;
     final double totalTextHeight =
-        titleHeight + descHeight + 8.0; // 8.0 cho padding
+        titleHeight + descHeight + 8.0; // Giảm padding từ 8.0 xuống 4.0
 
     return GestureDetector(
-      onTap: onTap ??
+      onTap: widget.onTap ??
           () {
-            // Điều hướng đến trang chi tiết phim
+            // Điều hướng đến trang chi tiết phim với thông tin yêu thích
             Navigator.pushNamed(
               context,
               '/movie_detail',
-              arguments: movie,
+              arguments: {
+                'movie': widget.movie,
+                'isFavorite': _isFavorite,
+                'fromSearch': true
+              },
             );
           },
       child: Container(
-        width: width,
-        height: imageHeight + totalTextHeight,
-        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+        width: widget.width,
+        margin: const EdgeInsets.symmetric(
+            horizontal: 4.0,
+            vertical: 0.5), // Giảm vertical margin từ 2.0 xuống 0.5
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Poster phim - Sử dụng chiều cao cố định thay vì Expanded
-            SizedBox(
-              width: width,
-              height: imageHeight,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12.0),
-                child: _buildImage(movie.imageUrl, width, imageHeight),
-              ),
-            ),
-            const SizedBox(height: 4.0),
-            // Tiêu đề phim - Giới hạn chiều cao
-            SizedBox(
-              height: titleHeight,
-              child: Text(
-                movie.title,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Năm sản xuất và mô tả ngắn - Giới hạn chiều cao
-            if (movie.year.isNotEmpty || movie.description.isNotEmpty)
-              SizedBox(
-                height: descHeight,
-                child: Row(
-                  children: [
-                    if (movie.year.isNotEmpty)
-                      Text(
-                        movie.year,
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey[400],
-                          fontSize: 8,
-                          fontWeight: FontWeight.w500,
-                        ),
+            // Movie thumbnail với badge
+            Stack(
+              children: [
+                // Poster
+                Container(
+                  height: imageHeight,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
                       ),
-                    if (movie.year.isNotEmpty && movie.description.isNotEmpty)
-                      Text(
-                        ' • ',
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey[400],
-                          fontSize: 8,
-                        ),
-                      ),
-                    if (movie.description.isNotEmpty)
-                      Expanded(
-                        child: Text(
-                          movie.description,
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey[400],
-                            fontSize: 8,
+                    ],
+                    image: widget.movie.imageUrl.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(widget.movie.imageUrl),
+                            fit: BoxFit.cover,
+                            onError: (error, stackTrace) {
+                              // Placeholder on error
+                            },
+                          )
+                        : null,
+                  ),
+                  child: widget.movie.imageUrl.isEmpty
+                      ? Center(
+                          child: Icon(
+                            Icons.movie,
+                            color: Colors.white38,
+                            size: widget.width * 0.4,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        )
+                      : null,
+                ),
+                // Year badge
+                if (widget.movie.year.isNotEmpty)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4.0, vertical: 2.0),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: Text(
+                        widget.movie.year,
+                        style: GoogleFonts.poppins(
+                          color: Colors.orange,
+                          fontSize: 8.0,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                // Favorite icon
+                if (_isFavorite)
+                  Positioned(
+                    top: 4,
+                    left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.favorite,
+                        color: Colors.red,
+                        size: 14,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            // Title & subtitle
+            Container(
+              height: totalTextHeight,
+              width: widget.width,
+              padding: const EdgeInsets.only(
+                  top: 3.0), // Giảm padding từ 4.0 xuống 3.0
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.movie.title,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 10.0,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (widget.movie.year.isNotEmpty ||
+                      widget.movie.description.isNotEmpty)
+                    Text(
+                      widget.movie.year.isNotEmpty
+                          ? widget.movie.year
+                          : widget.movie.description,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey[400],
+                        fontSize: 8.0,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildImage(String imageUrl, double width, double height) {
-    // Kiểm tra nếu imageUrl là URL thực tế (bắt đầu bằng http hoặc https)
-    if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            width: width,
-            height: height,
-            color: Colors.grey[800],
-            child: Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: width,
-            height: height,
-            color: Colors.grey[800],
-            child: const Icon(
-              Icons.broken_image,
-              color: Colors.white,
-            ),
-          );
-        },
-      );
-    } else {
-      // Xử lý hình ảnh cục bộ (từ assets)
-      return Image.asset(
-        imageUrl,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: width,
-            height: height,
-            color: Colors.grey[800],
-            child: const Icon(
-              Icons.broken_image,
-              color: Colors.white,
-            ),
-          );
-        },
-      );
-    }
   }
 }

@@ -3,7 +3,7 @@ import 'package:movieom_app/Entity/user_model.dart';
 
 class UserController {
   final CollectionReference _usersCollection =
-  FirebaseFirestore.instance.collection('users');
+      FirebaseFirestore.instance.collection('users');
 
   // Thêm thông tin người dùng mới với UID làm ID của document
   Future<void> addUserDetails({
@@ -22,15 +22,16 @@ class UserController {
       'age': age,
     });
 
-    // Tạo subcollection 'searchHistory' trống
-    // Chỉ cần tạo một subcollection rỗng, Firestore sẽ tự động tạo khi có document đầu tiên
-    // Ở đây có thể bỏ qua bước tạo document rỗng, vì SearchScreen sẽ thêm document khi cần
+    // Tạo subcollection 'favorites' trống với một document rỗng
+    // Document này sẽ bị xóa khi người dùng thêm phim yêu thích đầu tiên
+    await userDocRef.collection('favorites').doc('placeholder').set(
+        {'created_at': FieldValue.serverTimestamp(), 'is_placeholder': true});
   }
 
   // Lấy thông tin người dùng theo email
   Future<UserModel?> getUserByEmail(String email) async {
     final querySnapshot =
-    await _usersCollection.where('email', isEqualTo: email).limit(1).get();
+        await _usersCollection.where('email', isEqualTo: email).limit(1).get();
 
     if (querySnapshot.docs.isNotEmpty) {
       final doc = querySnapshot.docs.first;

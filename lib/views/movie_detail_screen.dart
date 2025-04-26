@@ -11,6 +11,8 @@ import 'package:movieom_app/services/movie_api_service.dart';
 import 'package:movieom_app/views/video_player_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:movieom_app/services/favoritemovieservice.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
 
 class MovieDetailScreen extends StatefulWidget {
   const MovieDetailScreen({Key? key}) : super(key: key);
@@ -25,26 +27,77 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   MovieDetailModel? movieDetail;
   String? errorMessage;
   final MovieApiService _apiService = MovieApiService();
+  final AuthController _authController = AuthController();
+  late Favoritemovieservice _favoriteService;
+  bool _isFavorite = false;
+  bool _isCheckingFavorite = false;
+  String _userId = 'guest';
 
   @override
   void initState() {
     super.initState();
+    _initUser();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadMovieDetails();
     });
+  }
+
+  Future<void> _initUser() async {
+    try {
+      final userId = await _authController.getCurrentUserId() ?? 'guest';
+      setState(() {
+        _userId = userId;
+        _favoriteService = Favoritemovieservice(userId);
+      });
+    } catch (e) {
+      print('Error initializing user: $e');
+      setState(() {
+        _userId = 'guest';
+        _favoriteService = Favoritemovieservice('guest');
+      });
+    }
   }
 
   Future<void> _loadMovieDetails() async {
     // Get the movie passed as argument
     final args = ModalRoute.of(context)?.settings.arguments;
 
-    if (args is MovieModel) {
+    // Xử lý trường hợp arguments là Map (từ màn hình yêu thích)
+    MovieModel? movieArg;
+    bool? initialFavoriteState;
+    bool fromFavoriteScreen = false;
+
+    if (args is Map) {
+      // Parse các tham số từ map
+      movieArg = args['movie'] as MovieModel?;
+      initialFavoriteState = args['isFavorite'] as bool?;
+      fromFavoriteScreen = args['fromFavoriteScreen'] as bool? ?? false;
+
+      if (initialFavoriteState == true) {
+        // Đã biết trạng thái yêu thích từ màn hình truyền qua
+        setState(() {
+          _isFavorite = true;
+        });
+        print('Đã nhận trạng thái yêu thích từ màn hình trước: $_isFavorite');
+      }
+    } else if (args is MovieModel) {
+      movieArg = args;
+    }
+
+    if (movieArg != null) {
+      if (!mounted) return;
       setState(() {
-        movie = args;
+        movie = movieArg;
         isLoading = true;
       });
 
       try {
+        // Chỉ kiểm tra trạng thái yêu thích nếu không phải đến từ màn hình yêu thích
+        if (!fromFavoriteScreen) {
+          // Check if movie is in favorites
+          await _checkFavoriteStatus(movieArg.id);
+        }
+
         // Xác định slug từ thông tin phim
         String movieSlug = '';
         if (movie!.extraInfo != null && movie!.extraInfo!.containsKey('slug')) {
@@ -62,6 +115,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         );
 
         if (movieDetailResult != null) {
+          if (!mounted) return;
           setState(() {
             movieDetail = movieDetailResult;
             isLoading = false;
@@ -93,6 +147,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         }
       } catch (e) {
         print('Error loading movie details: $e');
+        if (!mounted) return;
         setState(() {
           // Hiển thị thông báo lỗi
           errorMessage = 'Không thể tải thông tin phim: ${e.toString()}';
@@ -100,10 +155,145 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         });
       }
     } else {
+      if (!mounted) return;
       setState(() {
         errorMessage = 'Invalid movie data';
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _checkFavoriteStatus(String movieId) async {
+    if (_userId == 'guest') return;
+
+    setState(() {
+      _isCheckingFavorite = true;
+    });
+
+    try {
+      print('Đang kiểm tra trạng thái yêu thích cho phim với ID: $movieId');
+
+      // Kiểm tra theo ID trước
+      bool isFavorite = await _favoriteService.isMovieFavorite(movieId);
+
+      // Nếu không tìm thấy theo ID, thử kiểm tra bằng slug nếu có
+      if (!isFavorite &&
+          movie?.extraInfo != null &&
+          movie!.extraInfo!.containsKey('slug')) {
+        final slug = movie!.extraInfo!['slug'];
+        if (slug != null && slug.isNotEmpty && slug != movieId) {
+          print('Không tìm thấy theo ID, kiểm tra theo slug: $slug');
+          final isFavoriteBySlug = await _favoriteService.isMovieFavorite(slug);
+          if (isFavoriteBySlug) {
+            print('Đã tìm thấy phim yêu thích bằng slug: $slug');
+            isFavorite = true;
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = isFavorite;
+          _isCheckingFavorite = false;
+        });
+        print('Kết quả cuối cùng kiểm tra yêu thích: $_isFavorite');
+      }
+    } catch (e) {
+      print('Error checking favorite status: $e');
+      if (mounted) {
+        setState(() {
+          _isFavorite = false;
+          _isCheckingFavorite = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_userId == 'guest') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Vui lòng đăng nhập để sử dụng tính năng này')),
+      );
+      return;
+    }
+
+    if (movie == null) return;
+
+    setState(() {
+      _isCheckingFavorite = true;
+    });
+
+    try {
+      print('Thông tin phim: ID=${movie!.id}, Title=${movie!.title}');
+      if (movie!.extraInfo != null && movie!.extraInfo!.containsKey('slug')) {
+        print('Slug=${movie!.extraInfo!['slug']}');
+      }
+
+      if (_isFavorite) {
+        // Remove from favorites - Hiển thị UI đang xóa
+        setState(() {
+          // Hiệu ứng đang xóa: Vẫn giữ nút màu hồng nhưng có loading
+          _isCheckingFavorite = true;
+        });
+
+        await _favoriteService.removeFavorite(movie!);
+        if (mounted) {
+          setState(() {
+            _isFavorite = false;
+            _isCheckingFavorite = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text('Đã xóa "${movie!.title}" khỏi danh sách yêu thích'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'Hoàn tác',
+                textColor: Colors.white,
+                onPressed: () =>
+                    _toggleFavorite(), // Gọi lại toggle để thêm lại
+              ),
+            ),
+          );
+        }
+      } else {
+        // Add to favorites - Hiển thị UI đang thêm
+        setState(() {
+          // Hiệu ứng đang thêm: nút vẫn màu xanh nhưng có loading
+          _isCheckingFavorite = true;
+        });
+
+        await _favoriteService.addFavorite(movie!);
+        if (mounted) {
+          setState(() {
+            _isFavorite = true;
+            _isCheckingFavorite = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text('Đã thêm "${movie!.title}" vào danh sách yêu thích'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error toggling favorite: $e');
+      if (mounted) {
+        setState(() {
+          _isCheckingFavorite = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -127,79 +317,103 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       ),
       body: isLoading
           ? const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-        ),
-      )
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+              ),
+            )
           : errorMessage != null
-          ? Center(
-        child: Text(
-          errorMessage!,
-          style: GoogleFonts.poppins(color: Colors.white),
-        ),
-      )
-          : _buildMovieDetails(),
+              ? Center(
+                  child: Text(
+                    errorMessage!,
+                    style: GoogleFonts.poppins(color: Colors.white),
+                  ),
+                )
+              : _buildMovieDetails(),
       bottomNavigationBar:
-      isLoading || errorMessage != null ? null : _buildBottomActionBar(),
+          isLoading || errorMessage != null ? null : _buildBottomActionBar(),
     );
   }
 
   Widget _buildBottomActionBar() {
-    if (movieDetail == null) return const SizedBox.shrink();
-
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       decoration: BoxDecoration(
-        color: Colors.black,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.5),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, -3),
+        color: Colors.black.withOpacity(0.7),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          // Nút Favorite với animation
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            decoration: BoxDecoration(
+              color: _isFavorite
+                  ? Colors.pink.withOpacity(0.2)
+                  : Colors.grey.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _isCheckingFavorite ? null : _toggleFavorite,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _isCheckingFavorite
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.pink),
+                              ),
+                            )
+                          : Icon(
+                              _isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: _isFavorite ? Colors.pink : Colors.grey,
+                            ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isFavorite ? 'Đã yêu thích' : 'Yêu thích',
+                        style: TextStyle(
+                          color: _isFavorite ? Colors.pink : Colors.grey,
+                          fontWeight:
+                              _isFavorite ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Nút xem phim
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: _handleWatchMovie,
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Xem phim'),
           ),
         ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: SafeArea(
-        child: Row(
-          children: [
-            // Nút Yêu thích
-            Expanded(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.favorite_border, color: Colors.white),
-                label: Text(
-                  'Yêu thích',
-                  style: GoogleFonts.poppins(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3F54D1),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đã thêm vào yêu thích')),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Nút Xem phim
-            Expanded(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.play_arrow, color: Colors.white),
-                label: Text(
-                  'Xem phim',
-                  style: GoogleFonts.poppins(color: Colors.white),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                onPressed: _handleWatchMovie,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -276,12 +490,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           child: posterUrl.isNotEmpty
               ? _buildImage(posterUrl, double.infinity, 250)
               : const Center(
-            child: Icon(
-              Icons.movie,
-              color: Colors.white38,
-              size: 80,
-            ),
-          ),
+                  child: Icon(
+                    Icons.movie,
+                    color: Colors.white38,
+                    size: 80,
+                  ),
+                ),
         ),
         // Overlay gradient for better text visibility
         Positioned(
@@ -678,17 +892,17 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color:
-                    isSelected ? Colors.red.shade300 : Colors.transparent,
+                        isSelected ? Colors.red.shade300 : Colors.transparent,
                     width: 2,
                   ),
                   boxShadow: isSelected
                       ? [
-                    BoxShadow(
-                      color: Colors.red.withOpacity(0.3),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    )
-                  ]
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          )
+                        ]
                       : null,
                 ),
                 child: Center(
@@ -697,7 +911,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       fontSize: 13,
                     ),
                     textAlign: TextAlign.center,
@@ -721,31 +935,31 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     try {
       // Lấy danh sách tất cả các tập từ tất cả các server
       final allEpisodes = movieDetail?.episodes
-          .asMap()
-          .entries
-          .map((entry) {
-        final serverIndex = entry.key;
-        final server = entry.value;
-        return server.serverData.asMap().entries.map((e) {
-          final episodeIndex = e.key;
-          final ep = e.value;
-          return {
-            'name': ep.name,
-            'link_m3u8': ep.linkM3u8,
-            'link_embed': ep.linkEmbed,
-            'server_index': serverIndex,
-            'episode_index': episodeIndex,
-          };
-        });
-      })
-          .expand((i) => i)
-          .toList() ??
+              .asMap()
+              .entries
+              .map((entry) {
+                final serverIndex = entry.key;
+                final server = entry.value;
+                return server.serverData.asMap().entries.map((e) {
+                  final episodeIndex = e.key;
+                  final ep = e.value;
+                  return {
+                    'name': ep.name,
+                    'link_m3u8': ep.linkM3u8,
+                    'link_embed': ep.linkEmbed,
+                    'server_index': serverIndex,
+                    'episode_index': episodeIndex,
+                  };
+                });
+              })
+              .expand((i) => i)
+              .toList() ??
           [];
 
       // Tìm index của tập hiện tại trong danh sách tất cả các tập
       final currentEpisodeIndex = allEpisodes.indexWhere(
-            (e) =>
-        e['name'] == episode.name &&
+        (e) =>
+            e['name'] == episode.name &&
             e['link_m3u8'] == episode.linkM3u8 &&
             e['link_embed'] == episode.linkEmbed,
       );
@@ -777,7 +991,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       else if (episode.linkEmbed.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Phim này chỉ có link nhúng, chất lượng có thể không tốt'),
+            content:
+                Text('Phim này chỉ có link nhúng, chất lượng có thể không tốt'),
           ),
         );
         Navigator.pushNamed(
@@ -846,7 +1061,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     } else {
       // Trường hợp không có tập phim (phim lẻ)
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chức năng xem phim lẻ sẽ được cập nhật sau')),
+        const SnackBar(
+            content: Text('Chức năng xem phim lẻ sẽ được cập nhật sau')),
       );
     }
   }
@@ -854,7 +1070,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   List<Widget> _buildCountryChips(List<Country> countries) {
     return List<Widget>.from(
       countries.map(
-            (country) => Chip(
+        (country) => Chip(
           label: Text(
             country.name,
             style: GoogleFonts.poppins(
@@ -931,7 +1147,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     if (movieDetail != null && movieDetail!.hasGenres) {
       return List<Widget>.from(
         movieDetail!.movie.category.map(
-              (genre) => Chip(
+          (genre) => Chip(
             label: Text(
               genre.name,
               style: GoogleFonts.poppins(
@@ -947,7 +1163,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     } else if (movie != null && movie!.genres.isNotEmpty) {
       return List<Widget>.from(
         movie!.genres.map(
-              (genre) => Chip(
+          (genre) => Chip(
             label: Text(
               genre,
               style: GoogleFonts.poppins(
@@ -1108,7 +1324,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             ),
                             backgroundColor: Colors.deepOrange.withOpacity(0.7),
                             materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
+                                MaterialTapTargetSize.shrinkWrap,
                           );
                         }).toList(),
                       ),
@@ -1158,7 +1374,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             ),
                             backgroundColor: Colors.blueGrey.withOpacity(0.7),
                             materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
+                                MaterialTapTargetSize.shrinkWrap,
                           );
                         }).toList(),
                       ),

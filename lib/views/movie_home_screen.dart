@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/controllers/movie_controller.dart';
+import 'package:movieom_app/services/favoritemovieservice.dart';
 import 'package:movieom_app/widgets/category_filter.dart';
 import 'package:movieom_app/widgets/featured_movie.dart';
 import 'package:movieom_app/widgets/genre_grid.dart';
@@ -403,11 +404,39 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         if (_apiMovies.isNotEmpty)
           FeaturedMovie(
             movie: _apiMovies[0],
-            onTap: () {
+            onTap: () async {
+              // Kiểm tra xem phim có trong danh sách yêu thích không
+              bool isFavorite = false;
+              try {
+                final userId =
+                    await _authController.getCurrentUserId() ?? 'guest';
+                if (userId != 'guest') {
+                  final favoriteService = Favoritemovieservice(userId);
+                  isFavorite =
+                      await favoriteService.isMovieFavorite(_apiMovies[0].id);
+
+                  // Nếu không tìm thấy theo ID, thử kiểm tra bằng slug
+                  if (!isFavorite &&
+                      _apiMovies[0].extraInfo != null &&
+                      _apiMovies[0].extraInfo!.containsKey('slug')) {
+                    final slug = _apiMovies[0].extraInfo!['slug'];
+                    if (slug != null && slug is String && slug.isNotEmpty) {
+                      isFavorite = await favoriteService.isMovieFavorite(slug);
+                    }
+                  }
+                }
+              } catch (e) {
+                print('Lỗi kiểm tra yêu thích trong trang chủ: $e');
+              }
+
               Navigator.pushNamed(
                 context,
                 '/movie_detail',
-                arguments: _apiMovies[0],
+                arguments: {
+                  'movie': _apiMovies[0],
+                  'isFavorite': isFavorite,
+                  'fromHomeScreen': true
+                },
               );
             },
           ),

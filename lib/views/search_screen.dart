@@ -9,6 +9,8 @@ import 'package:movieom_app/Entity/api_movie.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/services/movie_api_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:movieom_app/services/favoritemovieservice.dart';
+import 'package:movieom_app/controllers/auth_controller.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -30,6 +32,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isTyping = false;
   DateTime _lastTyped = DateTime.now();
   final MovieApiService _apiService = MovieApiService();
+  final AuthController _authController = AuthController();
 
   @override
   void initState() {
@@ -267,6 +270,24 @@ class _SearchScreenState extends State<SearchScreen> {
     );
 
     try {
+      // Kiểm tra xem phim đã được yêu thích chưa
+      bool isFavorite = false;
+      try {
+        final userId = await _authController.getCurrentUserId() ?? 'guest';
+        if (userId != 'guest') {
+          final favoriteService = Favoritemovieservice(userId);
+          // Kiểm tra theo ID
+          isFavorite = await favoriteService.isMovieFavorite(movieModel.id);
+
+          // Nếu không tìm thấy theo ID, thử kiểm tra bằng slug
+          if (!isFavorite && movie.slug.isNotEmpty) {
+            isFavorite = await favoriteService.isMovieFavorite(movie.slug);
+          }
+        }
+      } catch (e) {
+        print('Lỗi kiểm tra trạng thái yêu thích: $e');
+      }
+
       // Use the slug to get full movie details
       String movieSlug = movie.slug.isNotEmpty ? movie.slug : movie.id;
       print('Loading movie details for slug: $movieSlug');
@@ -292,7 +313,7 @@ class _SearchScreenState extends State<SearchScreen> {
           genres:
               movieDetailResult.movie.category.map((cat) => cat.name).toList(),
           year: movieDetailResult.movie.year.toString(),
-          isFavorite: false,
+          isFavorite: isFavorite, // Sử dụng trạng thái yêu thích đã kiểm tra
           extraInfo: {
             'slug': movie.slug,
             'origin_name': movieDetailResult.movie.originName,
@@ -306,36 +327,46 @@ class _SearchScreenState extends State<SearchScreen> {
           },
         );
 
-        // Always navigate to movie detail screen as requested
+        // Navigate to movie detail screen with favorite status
         Navigator.pushNamed(
           context,
           '/movie_detail',
-          arguments: enhancedMovieModel,
+          arguments: {
+            'movie': enhancedMovieModel,
+            'isFavorite': isFavorite,
+            'fromSearchScreen': true
+          },
         );
       } else {
-        print('Failed to get movie details, using basic model');
-        // Fallback to normal movie detail navigation with basic model
+        // If detailed data cannot be loaded, navigate with basic model
         Navigator.pushNamed(
           context,
           '/movie_detail',
-          arguments: movieModel,
+          arguments: {
+            'movie': movieModel,
+            'isFavorite': isFavorite,
+            'fromSearchScreen': true
+          },
         );
       }
     } catch (e) {
-      print('Error loading movie details: $e');
-
       // Close loading dialog
       Navigator.of(context, rootNavigator: true).pop();
 
-      // Show error and navigate to regular movie detail
+      print('Error navigating to movie detail: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không thể tải chi tiết phim: $e')),
+        SnackBar(content: Text('Lỗi tải dữ liệu phim: $e')),
       );
 
+      // Still navigate to movie detail with basic model on error
       Navigator.pushNamed(
         context,
         '/movie_detail',
-        arguments: movieModel,
+        arguments: {
+          'movie': movieModel,
+          'isFavorite': false,
+          'fromSearchScreen': true
+        },
       );
     }
   }
