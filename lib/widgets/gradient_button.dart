@@ -5,12 +5,16 @@ class GradientButton extends StatefulWidget {
   final String text;
   final VoidCallback onTap;
   final double fontSize;
+  final IconData? icon;
+  final Color? iconColor;
 
   const GradientButton({
     super.key,
     required this.text,
     required this.onTap,
     this.fontSize = 20,
+    this.icon,
+    this.iconColor,
   });
 
   @override
@@ -62,7 +66,7 @@ class _GradientButtonState extends State<GradientButton>
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.black, // Đặt nền màu đen
+                  color: Colors.black,
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: const [
                     BoxShadow(
@@ -73,14 +77,34 @@ class _GradientButtonState extends State<GradientButton>
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    widget.text,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: widget.fontSize,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: widget.icon != null
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              widget.icon,
+                              color: widget.iconColor ?? Colors.white,
+                              size: widget.fontSize + 4,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.text,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.bold,
+                                fontSize: widget.fontSize,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          widget.text,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            fontSize: widget.fontSize,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             );

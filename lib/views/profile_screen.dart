@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
 import 'package:movieom_app/widgets/gradient_button.dart';
-import 'package:movieom_app/widgets/drawer_widget.dart'; // Import DrawerWidget
 import 'package:movieom_app/widgets/profile_containers.dart'; // Import ProfileContainers
 
 class ProfileScreen extends StatefulWidget {
@@ -70,40 +69,78 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.black,
         title: Text(
           'Thông tin cá nhân',
-          style: GoogleFonts.aBeeZee(
+          style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
+        elevation: 0,
       ),
-      drawer: const DrawerWidget(), // Navbar dạng drawer
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
               // Ảnh đại diện
-              Image.asset(
-                'assets/images/userlogo.png',
-                height: 90,
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF3F54D1),
+                    width: 3,
+                  ),
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/userlogo.png',
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
 
               // Email người dùng
               Text(
                 _userName ?? 'Chưa đăng nhập',
-                style: GoogleFonts.aBeeZee(
-                  fontSize: 18,
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
                   color: Colors.white,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3F54D1).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF3F54D1),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'Thành viên',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 30),
 
               // Các container
               ProfileContainers(

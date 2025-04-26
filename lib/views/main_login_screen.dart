@@ -101,11 +101,11 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                       child: ScaleTransition(
                         scale: _scaleAnimation,
                         child: GradientButton(
-                          text: "Đăng nhập bằng Facebook",
+                          text: "Đăng nhập Facebook",
                           onTap: () {
                             // TODO: Facebook login
                           },
-                          fontSize: 18,
+                          fontSize: 16,
                         ),
                       ),
                     ),

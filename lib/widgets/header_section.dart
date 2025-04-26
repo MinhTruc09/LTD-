@@ -24,18 +24,22 @@ class HeaderSection extends StatelessWidget {
         Center(
           child: Text(
             title,
+            textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              fontSize: 33,
+              fontSize: 30,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(height: 10),
         Text(
           subtitle,
+          textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
-            fontSize: 20,
+            fontSize: 18,
             color: Colors.white,
           ),
         ),

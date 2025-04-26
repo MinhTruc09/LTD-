@@ -22,33 +22,49 @@ class ItemTile extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          Icon(icon, color: Colors.black),
-          const SizedBox(width: 18),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.aBeeZee(color: Colors.black,fontSize: 18,fontWeight: FontWeight.bold),
-              ),
-              if (subtitle.isNotEmpty) ...[
-                const SizedBox(height: 5),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3F54D1).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon, 
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  subtitle,
-                  style: GoogleFonts.aBeeZee(
-                    fontWeight: FontWeight.w300,
+                  title,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
                     fontSize: 15,
-                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.6),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
-          const Spacer(),
-          const Icon(
+          Icon(
             Icons.arrow_forward_ios,
-            color: Colors.black,
-            size: 20,
+            color: Colors.white.withOpacity(0.6),
+            size: 16,
           ),
         ],
       ),

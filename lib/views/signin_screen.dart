@@ -127,11 +127,14 @@ class _SignInScreenState extends State<SignInScreen>
                       // Header Section
                       FadeTransition(
                         opacity: _fadeAnimation,
-                        child: HeaderSection(
-                          icon: Image.asset('assets/images/userlogo.png',
-                              height: 100),
-                          title: "Ready to watch something",
-                          subtitle: "Please sign in",
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: HeaderSection(
+                            icon: Image.asset('assets/images/userlogo.png',
+                                height: 100),
+                            title: "Ready to watch something",
+                            subtitle: "Please sign in",
+                          ),
                         ),
                       ),
 

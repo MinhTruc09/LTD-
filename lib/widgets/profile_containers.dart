@@ -11,22 +11,22 @@ class ProfileContainers extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Container cho "Nội dung tài xuồng"
+        // Container cho "Nội dung tài xuống"
         const DiagonalContainer(
-          title: 'NỘI DUNG TẢI XUỐNG',
+          title: 'NỘI DUNG',
           items: [
             ItemTile(
               title: 'Nội dung tải xuống',
-              subtitle: 'Xem và tải nội dung',
-              icon: Icons.download,
+              subtitle: 'Xem và quản lý nội dung đã lưu',
+              icon: Icons.download_rounded,
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // Container cho "Trò giúp"
         const DiagonalContainer(
-          title: "SERVICES",
+          title: "HỖ TRỢ",
           items: [
             ItemTile(
               title: 'Trung tâm hỗ trợ',
@@ -34,40 +34,40 @@ class ProfileContainers extends StatelessWidget {
               icon: Icons.support_agent,
             ),
             ItemTile(
-              title: 'CONTACT',
-              subtitle: 'Liên hệ với chúng tôi',
-              icon: Icons.email,
+              title: 'Liên hệ',
+              subtitle: 'Gửi phản hồi hoặc báo cáo sự cố',
+              icon: Icons.email_outlined,
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // Container cho "Giới thiệu"
         const DiagonalContainer(
-          title: 'ABOUT',
+          title: 'THÔNG TIN',
           items: [
             ItemTile(
-              title: 'Thông tin về Movieom',
+              title: 'Về Movieom',
               subtitle: 'Tìm hiểu thêm về chúng tôi',
-              icon: Icons.info,
+              icon: Icons.info_outline,
             ),
             ItemTile(
               title: 'Điều khoản sử dụng',
               subtitle: 'Xem điều khoản và chính sách',
-              icon: Icons.description,
+              icon: Icons.description_outlined,
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // Container cho "Đăng xuất"
         DiagonalContainer(
-          title: '',
+          title: 'TÀI KHOẢN',
           items: [
             ItemTile(
               title: 'Đăng xuất',
-              subtitle: '',
-              icon: Icons.logout,
+              subtitle: 'Đăng xuất khỏi tài khoản của bạn',
+              icon: Icons.logout_rounded,
               onTap: onSignOut,
             ),
           ],

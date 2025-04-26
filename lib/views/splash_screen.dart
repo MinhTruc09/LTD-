@@ -102,7 +102,9 @@ class _SplashScreenState extends State<SplashScreen>
               opacity: _fadeAnimation,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child: const MovieomLogo(),
+                child: const MovieomLogo(
+                  fontSize: 60,
+                ),
               ),
             ),
             const SizedBox(height: 20),
