@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
-import 'package:movieom_app/services/favoritemovieservice.dart';
+import 'package:movieom_app/services/favorite_movie_service.dart';
 
 class MovieItem extends StatefulWidget {
   final MovieModel movie;
@@ -22,7 +22,6 @@ class MovieItem extends StatefulWidget {
 
 class _MovieItemState extends State<MovieItem> {
   bool _isFavorite = false;
-  bool _isCheckingFavorite = true;
   late Favoritemovieservice _favoriteService;
   final AuthController _authController = AuthController();
 
@@ -43,7 +42,6 @@ class _MovieItemState extends State<MovieItem> {
       print('Error initializing user in MovieItem: $e');
       _favoriteService = Favoritemovieservice('guest');
       setState(() {
-        _isCheckingFavorite = false;
       });
     }
   }
@@ -66,14 +64,12 @@ class _MovieItemState extends State<MovieItem> {
       if (mounted) {
         setState(() {
           _isFavorite = isFavorite;
-          _isCheckingFavorite = false;
         });
       }
     } catch (e) {
       print('Error checking favorite status: $e');
       if (mounted) {
         setState(() {
-          _isCheckingFavorite = false;
         });
       }
     }
@@ -164,8 +160,8 @@ class _MovieItemState extends State<MovieItem> {
                       ),
                       child: Text(
                         widget.movie.year,
-                        style: GoogleFonts.poppins(
-                          color: Colors.orange,
+                        style: GoogleFonts.aBeeZee(
+                          color: Colors.white,
                           fontSize: 8.0,
                           fontWeight: FontWeight.bold,
                         ),
@@ -203,9 +199,9 @@ class _MovieItemState extends State<MovieItem> {
                 children: [
                   Text(
                     widget.movie.title,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.aBeeZee(
                       color: Colors.white,
-                      fontSize: 10.0,
+                      fontSize: 12.0,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -217,7 +213,7 @@ class _MovieItemState extends State<MovieItem> {
                       widget.movie.year.isNotEmpty
                           ? widget.movie.year
                           : widget.movie.description,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.aBeeZee(
                         color: Colors.grey[400],
                         fontSize: 8.0,
                       ),

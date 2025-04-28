@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/Entity/movie_detail_model.dart';
-import 'package:flutter/services.dart';
 
 class MovieApiService {
   final String baseUrl = 'https://phimapi.com';

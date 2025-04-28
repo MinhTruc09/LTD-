@@ -82,9 +82,9 @@ class _GenreGridState extends State<GenreGrid> {
             children: [
               Text(
                 'Thể loại (${totalDisplayed}/${widget.genres.length})',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -97,7 +97,7 @@ class _GenreGridState extends State<GenreGrid> {
                   },
                   child: Text(
                     'Trang đầu',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.aBeeZee(
                       color: const Color(0xFF3F54D1),
                       fontWeight: FontWeight.w500,
                     ),
@@ -156,7 +156,7 @@ class _GenreGridState extends State<GenreGrid> {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
                     'Trang ${_currentPage + 1}/$_totalPages',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.aBeeZee(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
                     ),
@@ -199,7 +199,7 @@ class _GenreGridState extends State<GenreGrid> {
                 ),
                 child: Text(
                   'Hiển thị tất cả thể loại',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+                  style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -245,10 +245,10 @@ class _GenreGridState extends State<GenreGrid> {
         alignment: Alignment.center,
         child: Text(
           genre['name'],
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             color: Colors.white,
             fontWeight: FontWeight.w500,
-            fontSize: 13,
+            fontSize: 14,
           ),
           textAlign: TextAlign.center,
           maxLines: 1,

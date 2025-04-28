@@ -1,17 +1,13 @@
 // lib/views/movie_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/Entity/movie_detail_model.dart';
 import 'package:movieom_app/services/movie_api_service.dart';
-import 'package:movieom_app/views/video_player_screen.dart';
 import 'package:flutter/foundation.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:movieom_app/services/favoritemovieservice.dart';
+import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 
 class MovieDetailScreen extends StatefulWidget {
@@ -275,7 +271,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             SnackBar(
               content:
                   Text('Đã thêm "${movie!.title}" vào danh sách yêu thích'),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.white,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -305,13 +301,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         backgroundColor: Colors.black,
         title: Text(
           movieDetail?.movie.name ?? 'Chi tiết phim',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             color: Colors.white,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -325,7 +322,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               ? Center(
                   child: Text(
                     errorMessage!,
-                    style: GoogleFonts.poppins(color: Colors.white),
+                    style: GoogleFonts.aBeeZee(color: Colors.white),
                   ),
                 )
               : _buildMovieDetails(),
@@ -386,7 +383,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                       const SizedBox(width: 8),
                       Text(
                         _isFavorite ? 'Đã yêu thích' : 'Yêu thích',
-                        style: TextStyle(
+                        style: GoogleFonts.aBeeZee(
                           color: _isFavorite ? Colors.pink : Colors.grey,
                           fontWeight:
                               _isFavorite ? FontWeight.bold : FontWeight.normal,
@@ -402,7 +399,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           // Nút xem phim
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Color(0xFF3F54D1),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -411,7 +408,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
             onPressed: _handleWatchMovie,
             icon: const Icon(Icons.play_arrow),
-            label: const Text('Xem phim'),
+            label:  Text('Xem phim',style: GoogleFonts.aBeeZee(color: Colors.white),),
           ),
         ],
       ),
@@ -526,7 +523,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               icon: const Icon(Icons.play_arrow, color: Colors.white),
               label: Text(
                 'Trailer',
-                style: GoogleFonts.poppins(color: Colors.white),
+                style: GoogleFonts.aBeeZee(color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.withOpacity(0.8),
@@ -566,7 +563,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         // Movie title
         Text(
           movieDetail!.movie.name,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -577,9 +574,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         if (movieDetail!.movie.originName.isNotEmpty)
           Text(
             movieDetail!.movie.originName,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               color: Colors.grey[400],
-              fontSize: 16,
+              fontSize: 18,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -604,7 +601,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         _buildInfoBadge(
           movieDetail!.movie.lang,
           Icons.language,
-          Colors.blue,
+          Color(0xFF3F54D1),
         ),
 
         // Time/Duration badge
@@ -645,9 +642,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+         Text(
           'Nội dung phim',
-          style: TextStyle(
+          style: GoogleFonts.aBeeZee(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -657,7 +654,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           movieDetail!.movie.content.isNotEmpty
               ? movieDetail!.movie.content
               : 'Không có mô tả cho phim này.',
-          style: const TextStyle(fontSize: 16),
+          style:  GoogleFonts.aBeeZee(fontSize: 16),
         ),
       ],
     );
@@ -670,9 +667,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+         Text(
           'Thông tin kỹ thuật',
-          style: TextStyle(
+          style: GoogleFonts.aBeeZee(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -721,7 +718,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(
+              style: GoogleFonts.aBeeZee(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -730,7 +727,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 16),
+              style: GoogleFonts.aBeeZee(fontSize: 16),
             ),
           ),
         ],
@@ -747,14 +744,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: const Color(0xFF3F54D1).withOpacity(0.5), width: 1),
+            color: const Color(0xFF3F54D1).withOpacity(0.5), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Danh sách tập phim',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -819,10 +816,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   // Method to build episode grid
   Widget _buildEpisodeGrid() {
     if (_selectedServerIndex >= movieDetail!.episodes.length) {
-      return const Center(
+      return Center(
         child: Text(
           'Không có tập phim',
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.aBeeZee(color: Colors.white),
         ),
       );
     }
@@ -830,10 +827,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final episodes = movieDetail!.episodes[_selectedServerIndex].serverData;
 
     if (episodes.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Không có tập phim',
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.aBeeZee(color: Colors.white),
         ),
       );
     }
@@ -844,7 +841,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         // Show episode count information
         Text(
           'Tổng số: ${episodes.length} tập${episodes.length > 0 ? " (Chọn tập ${_selectedEpisodeIndex + 1} - ${episodes[_selectedEpisodeIndex].name})" : ""}',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             color: Colors.white70,
             fontSize: 14,
           ),
@@ -852,9 +849,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         // Show server information
         Text(
           'Server: ${movieDetail!.episodes[_selectedServerIndex].serverName}',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             color: Colors.orange,
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -908,7 +905,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 child: Center(
                   child: Text(
                     episode.name,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.aBeeZee(
                       color: Colors.white,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
@@ -1066,25 +1063,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       );
     }
   }
-
-  List<Widget> _buildCountryChips(List<Country> countries) {
-    return List<Widget>.from(
-      countries.map(
-        (country) => Chip(
-          label: Text(
-            country.name,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.white,
-            ),
-          ),
-          backgroundColor: Colors.teal,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-        ),
-      ),
-    );
-  }
-
   Widget _buildInfoBadge(String text, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1100,7 +1078,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           const SizedBox(width: 4),
           Text(
             text,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               color: Colors.white,
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -1110,76 +1088,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       ),
     );
   }
-
-  Widget _buildInfoRow(
-      String label, String value, IconData icon, Color iconColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: 14,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildGenreChips() {
-    if (movieDetail != null && movieDetail!.hasGenres) {
-      return List<Widget>.from(
-        movieDetail!.movie.category.map(
-          (genre) => Chip(
-            label: Text(
-              genre.name,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: const Color(0xFF3F54D1),
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-          ),
-        ),
-      );
-    } else if (movie != null && movie!.genres.isNotEmpty) {
-      return List<Widget>.from(
-        movie!.genres.map(
-          (genre) => Chip(
-            label: Text(
-              genre,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: const Color(0xFF3F54D1),
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-          ),
-        ),
-      );
-    }
-    return [];
-  }
-
   Widget _buildImage(String imageUrl, double width, double height) {
     if (imageUrl.startsWith('http')) {
       return CachedNetworkImage(
@@ -1214,7 +1122,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               const SizedBox(height: 8),
               Text(
                 'Không thể tải hình ảnh',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white54,
                   fontSize: 12,
                 ),
@@ -1237,34 +1145,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       );
     }
   }
-
-  String _formatApiDate(String apiDate) {
-    try {
-      final DateTime dateTime = DateTime.parse(apiDate);
-      final now = DateTime.now();
-      final difference = now.difference(dateTime);
-
-      if (difference.inDays > 365) {
-        final years = (difference.inDays / 365).floor();
-        return '$years năm trước';
-      } else if (difference.inDays > 30) {
-        final months = (difference.inDays / 30).floor();
-        return '$months tháng trước';
-      } else if (difference.inDays > 0) {
-        return '${difference.inDays} ngày trước';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours} giờ trước';
-      } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} phút trước';
-      } else {
-        return 'Vừa xong';
-      }
-    } catch (e) {
-      // Fallback để hiển thị ngày ban đầu nếu không thể parse
-      return apiDate;
-    }
-  }
-
   // Method to build a better formatted cast and crew section
   Widget _buildCastAndCrew() {
     return Container(
@@ -1278,7 +1158,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         children: [
           Text(
             'Diễn viên & Đạo diễn',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -1303,7 +1183,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     children: [
                       Text(
                         'Đạo diễn',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.aBeeZee(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -1317,7 +1197,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                           return Chip(
                             label: Text(
                               dir,
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.aBeeZee(
                                 fontSize: 12,
                                 color: Colors.white,
                               ),
@@ -1353,7 +1233,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     children: [
                       Text(
                         'Diễn viên',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.aBeeZee(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -1367,7 +1247,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                           return Chip(
                             label: Text(
                               actor,
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.aBeeZee(
                                 fontSize: 12,
                                 color: Colors.white,
                               ),

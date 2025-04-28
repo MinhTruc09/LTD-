@@ -5,7 +5,7 @@ class MovieomLogo extends StatelessWidget {
 
   const MovieomLogo({
     super.key,
-    this.fontSize = 30, // Reduced from 60 to 30 for better AppBar fit
+    this.fontSize = 50, // Reduced from 60 to 30 for better AppBar fit
   });
 
   @override

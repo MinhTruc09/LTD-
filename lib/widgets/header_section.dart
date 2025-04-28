@@ -25,7 +25,7 @@ class HeaderSection extends StatelessWidget {
           child: Text(
             title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               fontSize: 30,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -38,7 +38,7 @@ class HeaderSection extends StatelessWidget {
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             fontSize: 18,
             color: Colors.white,
           ),

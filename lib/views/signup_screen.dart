@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -18,21 +17,23 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen>
-    with SingleTickerProviderStateMixin {
+class _SignupScreenState extends State<SignupScreen> with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _ageController = TextEditingController();
+
+  final AuthController _authController = AuthController();
+  final UserController _userController = UserController();
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<Alignment> _gradientAnimation;
+
   bool _isLoading = false;
-  final AuthController _authController = AuthController();
-  final UserController _userController = UserController();
 
   @override
   void initState() {
@@ -70,27 +71,15 @@ class _SignupScreenState extends State<SignupScreen>
     super.dispose();
   }
 
-  Future signUp() async {
+  Future<void> signUp() async {
     if (!passwordConfirmed()) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return const CustomAlertDialog(
-            title: "Error",
-            content: "Passwords do not match",
-            actionText: "Try again!",
-          );
-        },
-      );
+      _showErrorDialog("Mật khẩu không trùng khớp");
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // Đăng ký user và lấy UID
       final userCredential = await _authController.signUp(
         _emailController.text.trim(),
         _passwordController.text.trim(),
@@ -98,12 +87,11 @@ class _SignupScreenState extends State<SignupScreen>
       final userId = userCredential.user?.uid;
 
       if (userId == null) {
-        throw Exception('Failed to retrieve user ID after signup');
+        throw Exception('Không lấy được User ID sau đăng ký.');
       }
 
-      // Lưu thông tin user vào Firestore với UID làm ID
       await _userController.addUserDetails(
-        userId: userId, // Truyền UID
+        userId: userId,
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
@@ -111,65 +99,48 @@ class _SignupScreenState extends State<SignupScreen>
       );
 
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) {
-          return CustomAlertDialog(
-            title: "Success",
-            content: "Account created successfully! Please sign in.",
-            actionText: "Sure!",
-            onActionPressed: widget.showLoginPage,
-          );
-        },
-      );
+      _showSuccessDialog("Tạo tài khoản thành công! Vui lòng đăng nhập.");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) {
-          return CustomAlertDialog(
-            title: "Error",
-            content: e.message ?? "An error occurred",
-            actionText: "Oke",
-          );
-        },
-      );
+      _showErrorDialog(e.message ?? "Có lỗi xảy ra.");
     } on FormatException {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) {
-          return const CustomAlertDialog(
-            title: "Error",
-            content: "Please enter a valid age",
-            actionText: "Try again!",
-          );
-        },
-      );
+      _showErrorDialog("Vui lòng nhập tuổi hợp lệ!");
     } catch (e) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) {
-          return CustomAlertDialog(
-            title: "Error",
-            content: e.toString(),
-            actionText: "Oke",
-          );
-        },
-      );
+      _showErrorDialog(e.toString());
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
   bool passwordConfirmed() {
-    return _passwordController.text.trim() ==
-        _confirmPasswordController.text.trim();
+    return _passwordController.text.trim() == _confirmPasswordController.text.trim();
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => CustomAlertDialog(
+        title: "Lỗi",
+        content: message,
+        actionText: "Thử lại!",
+      ),
+    );
+  }
+
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => CustomAlertDialog(
+        title: "Thành công",
+        content: message,
+        actionText: "Đồng ý!",
+        onActionPressed: widget.showLoginPage,
+      ),
+    );
   }
 
   @override
@@ -190,160 +161,35 @@ class _SignupScreenState extends State<SignupScreen>
             colors: const [Color(0xFF3F54D1), Colors.black],
             child: SafeArea(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: HeaderSection(
-                        icon: Image.asset('assets/images/userlogo.png',
-                            height: 100),
-                        title: 'Create account to watch',
-                        subtitle: 'Sign up',
-                      ),
-                    ),
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.white,
-                                blurRadius: 15,
-                                offset: Offset(5, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              CustomTextField(
-                                controller: _emailController,
-                                hintText: "Email...",
-                                icon: Icons.email_rounded,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  final emailRegex =
-                                  RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                                  if (!emailRegex.hasMatch(value)) {
-                                    return 'Please enter a valid email';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              _buildDivider(),
-                              CustomTextField(
-                                controller: _passwordController,
-                                hintText: "Password...",
-                                icon: Icons.lock,
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              _buildDivider(),
-                              CustomTextField(
-                                controller: _confirmPasswordController,
-                                hintText: "Confirm password...",
-                                icon: Icons.lock,
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter again your password';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              _buildDivider(),
-                              CustomTextField(
-                                controller: _firstNameController,
-                                hintText: "First name...",
-                                icon: Icons.person,
-                                obscureText: false,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Enter your first name';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              _buildDivider(),
-                              CustomTextField(
-                                controller: _lastNameController,
-                                hintText: "Last name...",
-                                icon: Icons.person,
-                                obscureText: false,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Enter your last name';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              _buildDivider(),
-                              CustomTextField(
-                                controller: _ageController,
-                                hintText: "Age...",
-                                icon: Icons.calendar_today,
-                                obscureText: false,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'How old are you?';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
+                        title: 'Tạo tài khoản để xem phim đi',
+                        subtitle: 'Đăng ký',
                       ),
                     ),
                     const SizedBox(height: 10),
+                    _buildForm(),
+                    const SizedBox(height: 20),
                     ScaleTransition(
                       scale: _scaleAnimation,
                       child: _isLoading
                           ? const CircularProgressIndicator(
-                        valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       )
                           : GradientButton(
-                        text: "Sign Up",
+                        text: "Đăng ký",
                         onTap: signUp,
                       ),
                     ),
                     const SizedBox(height: 20),
                     FadeTransition(
                       opacity: _fadeAnimation,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Already have an account? ",
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: widget.showLoginPage,
-                            child: Text(
-                              "Sign in",
-                              style: GoogleFonts.poppins(
-                                color: const Color(0xFF3F54D1),
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: _buildLoginRedirect(),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -356,10 +202,95 @@ class _SignupScreenState extends State<SignupScreen>
     );
   }
 
-  Widget _buildDivider() {
-    return const Divider(
-      height: 2,
-      color: Colors.white,
+  Widget _buildForm() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(color: Colors.white, blurRadius: 15, offset: Offset(5, 5)),
+        ],
+      ),
+      child: Column(
+        children: [
+          CustomTextField(
+            controller: _emailController,
+            hintText: "Email...",
+            icon: Icons.email_rounded,
+            validator: (value) {
+              if (value == null || value.isEmpty) return 'Vui lòng nhập email!';
+              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(value)) {
+                return 'Email không hợp lệ!';
+              }
+              return null;
+            },
+          ),
+          _buildDivider(),
+          CustomTextField(
+            controller: _passwordController,
+            hintText: "Mật khẩu...",
+            icon: Icons.lock,
+            obscureText: true,
+            validator: (value) => value == null || value.isEmpty ? 'Vui lòng nhập mật khẩu!' : null,
+          ),
+          _buildDivider(),
+          CustomTextField(
+            controller: _confirmPasswordController,
+            hintText: "Xác nhận mật khẩu...",
+            icon: Icons.lock,
+            obscureText: true,
+            validator: (value) => value == null || value.isEmpty ? 'Vui lòng xác nhận mật khẩu!' : null,
+          ),
+          _buildDivider(),
+          CustomTextField(
+            controller: _firstNameController,
+            hintText: "Họ...",
+            icon: Icons.person,
+            validator: (value) => value == null || value.isEmpty ? 'Vui lòng nhập họ!' : null,
+          ),
+          _buildDivider(),
+          CustomTextField(
+            controller: _lastNameController,
+            hintText: "Tên...",
+            icon: Icons.person,
+            validator: (value) => value == null || value.isEmpty ? 'Vui lòng nhập tên!' : null,
+          ),
+          _buildDivider(),
+          CustomTextField(
+            controller: _ageController,
+            hintText: "Tuổi...",
+            icon: Icons.calendar_today,
+            validator: (value) => value == null || value.isEmpty ? 'Bạn nhiêu tuổi rồi?' : null,
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildLoginRedirect() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Có tài khoản rồi hả? ",
+          style: GoogleFonts.aBeeZee(color: Colors.white),
+        ),
+        GestureDetector(
+          onTap: widget.showLoginPage,
+          child: Text(
+            "Đăng nhập",
+            style: GoogleFonts.aBeeZee(
+              color: const Color(0xFF3F54D1),
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return const Divider(height: 3, color: Colors.white);
   }
 }

@@ -37,9 +37,9 @@ class CategoryFilter extends StatelessWidget {
               ),
               child: Text(
                 category,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),

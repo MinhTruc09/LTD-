@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:movieom_app/widgets/Appbarfavorite.dart';
-import 'package:movieom_app/widgets/AnimatedPlayButton.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
-import 'package:movieom_app/services/favoritemovieservice.dart';
+import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'dart:async';
 
@@ -36,7 +35,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
     _initializeUser();
     _userIdSubscription = _authController.userIdStream.listen((newUserId) {
       if (newUserId != _currentUserId) {
-        _onAccountChanged(newUserId ?? 'guest');
+        _onAccountChanged(newUserId);
       }
     });
   }
@@ -128,9 +127,9 @@ class _FavoriteScreenState extends State<FavoriteScreen>
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Đã xóa "${movie.title}" khỏi yêu thích'),
+          content: Text('Đã xóa "${movie.title}" khỏi yêu thích',style: GoogleFonts.aBeeZee(color: Colors.white),),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.redAccent,
+          backgroundColor: Color(0xFF3F54D1),
           action: SnackBarAction(
             label: 'Hoàn tác',
             textColor: Colors.white,
@@ -218,7 +217,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
           const SizedBox(height: 24),
           Text(
             'Bạn chưa có phim yêu thích',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -227,16 +226,16 @@ class _FavoriteScreenState extends State<FavoriteScreen>
           const SizedBox(height: 8),
           Text(
             'Hãy thêm phim yêu thích từ trang chi tiết phim',
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               color: Colors.grey[400],
-              fontSize: 16,
+              fontSize: 17,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             icon: const Icon(Icons.search),
-            label: const Text('Tìm phim ngay'),
+            label:  Text('Tìm phim ngay',style: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white,fontWeight: FontWeight.w700),),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF3F54D1),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -262,7 +261,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: const Color(0xFF3F54D1).withOpacity(0.3),
-          width: 1,
+          width: 3,
         ),
       ),
       color: Colors.grey[900],
@@ -316,13 +315,13 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.amber, width: 1),
+                          border: Border.all(color: Color(0xFF3F54D1), width: 1.5),
                         ),
                         child: Text(
                           movie.year,
-                          style: GoogleFonts.poppins(
-                            color: Colors.amber,
-                            fontSize: 12,
+                          style: GoogleFonts.aBeeZee(
+                            color: Color(0xFF3F54D1),
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -335,9 +334,9 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                     right: 12,
                     child: Text(
                       movie.title,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.aBeeZee(
                         color: Colors.white,
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         shadows: [
                           Shadow(
@@ -378,9 +377,9 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                   if (movie.description.isNotEmpty)
                     Text(
                       movie.description,
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.aBeeZee(
                         color: Colors.grey[300],
-                        fontSize: 14,
+                        fontSize: 15,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -399,7 +398,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                               const Icon(Icons.play_arrow, color: Colors.white),
                           label: const Text('Xem phim'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                            backgroundColor: Color(0xFF3F54D1),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -425,7 +424,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                       // Remove button
                       IconButton(
                         icon: const Icon(Icons.delete_outline, size: 28),
-                        color: Colors.grey[400],
+                        color: Colors.white,
                         tooltip: 'Xóa khỏi yêu thích',
                         onPressed: () => _showRemoveConfirmation(movie),
                       ),
@@ -452,7 +451,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
       ),
       child: Text(
         genre,
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.aBeeZee(
           color: Colors.white,
           fontSize: 12,
         ),
@@ -488,7 +487,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
               const SizedBox(height: 8),
               Text(
                 movie.title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -511,27 +510,27 @@ class _FavoriteScreenState extends State<FavoriteScreen>
         backgroundColor: Colors.grey[900],
         title: Text(
           'Xóa khỏi danh sách yêu thích?',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         content: Text(
           'Bạn có chắc muốn xóa "${movie.title}" khỏi danh sách phim yêu thích?',
-          style: GoogleFonts.poppins(color: Colors.white),
+          style: GoogleFonts.aBeeZee(color: Colors.white),
         ),
         actions: [
           TextButton(
             child: Text(
               'Hủy',
-              style: GoogleFonts.poppins(color: Colors.grey),
+              style: GoogleFonts.aBeeZee(color: Colors.grey),
             ),
             onPressed: () => Navigator.pop(context),
           ),
           TextButton(
             child: Text(
               'Xóa',
-              style: GoogleFonts.poppins(color: Colors.red),
+              style: GoogleFonts.aBeeZee(color: Color(0xFF3F54D1)),
             ),
             onPressed: () {
               Navigator.pop(context);

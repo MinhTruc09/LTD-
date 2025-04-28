@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/widgets/custom_text_field.dart';
 import 'package:movieom_app/widgets/gradient_background.dart';
 import 'package:movieom_app/widgets/gradient_button.dart';
@@ -58,9 +57,9 @@ class _ForgotPasswordState extends State<ForgotPassword>
         context: context,
         builder: (context) {
           return const CustomAlertDialog(
-            title: "Error",
-            content: "Please enter your email",
-            actionText: "Try again!",
+            title: "Lỗi",
+            content: "Vui lòng nhập email",
+            actionText: "Thử lại!",
           );
         },
       );
@@ -73,9 +72,9 @@ class _ForgotPasswordState extends State<ForgotPassword>
         context: context,
         builder: (context) {
           return const CustomAlertDialog(
-            title: "Error",
-            content: "Please enter a valid email",
-            actionText: "Try again!",
+            title: "Lỗi",
+            content: "Vui lòng nhập email hợp lệ",
+            actionText: "Thử lại!",
           );
         },
       );
@@ -93,9 +92,9 @@ class _ForgotPasswordState extends State<ForgotPassword>
         context: context,
         builder: (context) {
           return const CustomAlertDialog(
-            title: "Success",
-            content: "Password reset link sent! Check your email.",
-            actionText: "Sure!",
+            title: "Thành công",
+            content: "Link đổi mật khẩu đã được gửi! kiểm tra email của bạn.",
+            actionText: "Đồng ý!",
           );
         },
       );
@@ -105,8 +104,8 @@ class _ForgotPasswordState extends State<ForgotPassword>
         context: context,
         builder: (context) {
           return CustomAlertDialog(
-            title: "Error",
-            content: e.message ?? "An error occurred",
+            title: "Lỗi",
+            content: e.message ?? "Đã phát hiện lỗi",
             actionText: "Oke",
           );
         },
@@ -159,8 +158,8 @@ class _ForgotPasswordState extends State<ForgotPassword>
                 children: [
                   const Icon(Icons.key, color: Colors.white, size: 50),
                   const HeaderSection(
-                    title: "Reset Password",
-                    subtitle: "Enter your email to reset",
+                    title: "Đổi mật khẩu",
+                    subtitle: "Nhập email để đổi mật khẩu",
                   ),
                 ],
               ),
@@ -187,7 +186,7 @@ class _ForgotPasswordState extends State<ForgotPassword>
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     )
                   : GradientButton(
-                      text: "Send Reset Link",
+                      text: "Gửi mã",
                       onTap: passwordReset,
                       fontSize: 18,
                     ),

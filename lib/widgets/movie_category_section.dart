@@ -27,7 +27,7 @@ class MovieCategorySection extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -37,9 +37,9 @@ class MovieCategorySection extends StatelessWidget {
                 onTap: onViewAll,
                 child: Text(
                   'Xem tất cả >',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.aBeeZee(
                     color: const Color(0xFF3F54D1),
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

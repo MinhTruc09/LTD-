@@ -1,4 +1,4 @@
-import 'package:movieom_app/Entity/movie_model.dart';
+
 
 class MovieDetailModel {
   final bool status;

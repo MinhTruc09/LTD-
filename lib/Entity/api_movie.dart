@@ -1,5 +1,4 @@
 // lib/Entity/api_movie.dart
-import 'package:movieom_app/Entity/movie_model.dart';
 
 class ApiMovie {
   final String title;

@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:movieom_app/firebase_options.dart';
 import 'package:movieom_app/routes/app_routes.dart';
-import 'package:movieom_app/views/splash_screen.dart';
 import 'widgets/theme.dart';
 
 void main() async {

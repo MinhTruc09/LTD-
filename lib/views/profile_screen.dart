@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
-import 'package:movieom_app/widgets/gradient_button.dart';
 import 'package:movieom_app/widgets/profile_containers.dart'; // Import ProfileContainers
 
 class ProfileScreen extends StatefulWidget {
@@ -15,7 +14,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthController _authController = AuthController();
   String? _userName;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -32,7 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _signOut() async {
     setState(() {
-      _isLoading = true;
     });
 
     try {
@@ -55,7 +52,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
         });
       }
     }
@@ -66,10 +62,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
         title: Text(
           'Thông tin cá nhân',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.aBeeZee(
+            fontSize: 20,
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -93,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: const Color(0xFF3F54D1),
-                    width: 3,
+                    width: 2.5,
                   ),
                 ),
                 child: ClipOval(
@@ -109,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Email người dùng
               Text(
                 _userName ?? 'Chưa đăng nhập',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   fontSize: 20,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -133,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Text(
                   'Thành viên',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.aBeeZee(
                     fontSize: 14,
                     color: Colors.white,
                   ),

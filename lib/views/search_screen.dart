@@ -2,14 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:movieom_app/Entity/api_movie.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/services/movie_api_service.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:movieom_app/services/favoritemovieservice.dart';
+import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -248,7 +247,7 @@ class _SearchScreenState extends State<SearchScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
               const SizedBox(height: 16),
               Container(
@@ -260,7 +259,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 child: Text(
                   'Đang tải dữ liệu phim...',
-                  style: GoogleFonts.poppins(color: Colors.white),
+                  style: GoogleFonts.aBeeZee(color: Colors.white),
                 ),
               ),
             ],
@@ -376,11 +375,8 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -389,23 +385,16 @@ class _SearchScreenState extends State<SearchScreen> {
               height: 24,
               width: 24,
               margin: const EdgeInsets.only(right: 8),
-              child: Image.asset(
-                'assets/images/logo.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.movie, color: Colors.white, size: 20);
-                },
-              ),
             ),
             Flexible(
               child: Text(
                 movies.isNotEmpty && _controller.text.isNotEmpty
                     ? 'Kết quả tìm kiếm: ${_controller.text}'
                     : 'Tìm kiếm phim',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 20,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -424,13 +413,13 @@ class _SearchScreenState extends State<SearchScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withOpacity(0.3),
+                  color: Color(0xFF3F54D1).withOpacity(0.3),
                   blurRadius: 8,
                   spreadRadius: 1,
                 )
               ],
               gradient: LinearGradient(
-                colors: [Colors.blue.shade800, Colors.purple.shade800],
+                colors: [Color(0xFF3F54D1), Colors.white],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -439,10 +428,10 @@ class _SearchScreenState extends State<SearchScreen> {
             child: TextField(
               controller: _controller,
               onChanged: _onSearchChanged,
-              style: GoogleFonts.poppins(color: Colors.white),
+              style: GoogleFonts.aBeeZee(color: Colors.white),
               decoration: InputDecoration(
                 hintText: "Tìm kiếm phim...",
-                hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400),
+                hintStyle: GoogleFonts.aBeeZee(color: Colors.grey.shade400),
                 prefixIcon: const Icon(Icons.search, color: Colors.white70),
                 suffixIcon: _controller.text.isNotEmpty
                     ? IconButton(
@@ -497,10 +486,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       children: [
                         Text(
                           'Lịch sử tìm kiếm',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.aBeeZee(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 16,
                           ),
                         ),
                         TextButton(
@@ -511,9 +500,9 @@ class _SearchScreenState extends State<SearchScreen> {
                           },
                           child: Text(
                             'Xóa tất cả',
-                            style: GoogleFonts.poppins(
-                              color: Colors.blue,
-                              fontSize: 12,
+                            style: GoogleFonts.aBeeZee(
+                              color: Color(0xFF3F54D1),
+                              fontSize: 15,
                             ),
                           ),
                         ),
@@ -531,7 +520,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               const Icon(Icons.history, color: Colors.grey),
                           title: Text(
                             history['keyword'],
-                            style: GoogleFonts.poppins(color: Colors.white),
+                            style: GoogleFonts.aBeeZee(color: Colors.white),
                           ),
                           onTap: () {
                             _controller.text = history['keyword'];
@@ -566,7 +555,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     leading: const Icon(Icons.search, color: Colors.grey),
                     title: Text(
                       suggestions[index],
-                      style: GoogleFonts.poppins(color: Colors.white),
+                      style: GoogleFonts.aBeeZee(color: Colors.white),
                     ),
                     onTap: () {
                       _controller.text = suggestions[index];
@@ -586,12 +575,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       children: [
                         const CircularProgressIndicator(
                           valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.blue),
+                              AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Đang tìm kiếm...',
-                          style: GoogleFonts.poppins(color: Colors.white),
+                          style: GoogleFonts.aBeeZee(color: Colors.white),
                         ),
                       ],
                     ),
@@ -600,7 +589,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     ? Center(
                         child: Text(
                           _errorMessage,
-                          style: GoogleFonts.poppins(color: Colors.white),
+                          style: GoogleFonts.aBeeZee(color: Colors.white),
                           textAlign: TextAlign.center,
                         ),
                       )
@@ -612,16 +601,16 @@ class _SearchScreenState extends State<SearchScreen> {
                                 Icon(
                                   Icons.search,
                                   size: 80,
-                                  color: Colors.blue.withOpacity(0.5),
+                                  color: Color(0xFF3F54D1).withOpacity(0.5),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
                                   _controller.text.isEmpty
                                       ? 'Nhập từ khóa để tìm kiếm phim'
                                       : 'Không tìm thấy kết quả nào',
-                                  style: GoogleFonts.poppins(
+                                  style: GoogleFonts.aBeeZee(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: 18,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -645,12 +634,6 @@ class _SearchScreenState extends State<SearchScreen> {
                               // Extract data from extraInfo if available
                               final extraInfo =
                                   movie.toMovieModel().extraInfo ?? {};
-                              final bool isSeries = movie.category
-                                      .toLowerCase()
-                                      .contains('hoàn tất') ||
-                                  (extraInfo['episode_current']?.toString() ??
-                                          '')
-                                      .isNotEmpty;
                               final String episodeInfo =
                                   extraInfo['episode_current']?.toString() ??
                                       '';
@@ -702,7 +685,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                                             .grey.shade800,
                                                         child: const Icon(
                                                           Icons.movie,
-                                                          color: Colors.white54,
+                                                          color: Colors.white,
                                                           size: 50,
                                                         ),
                                                       ),
@@ -725,8 +708,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                                             valueColor:
                                                                 const AlwaysStoppedAnimation<
                                                                         Color>(
-                                                                    Colors
-                                                                        .blue),
+                                                                    Color(0xFF3F54D1)),
                                                           ),
                                                         );
                                                       },
@@ -736,7 +718,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                                           Colors.grey.shade800,
                                                       child: const Icon(
                                                         Icons.movie,
-                                                        color: Colors.white54,
+                                                        color: Colors.white,
                                                         size: 50,
                                                       ),
                                                     ),
@@ -787,7 +769,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                                       vertical: 4,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.blue
+                                                      color: Color(0xFF3F54D1)
                                                           .withOpacity(0.8),
                                                       borderRadius:
                                                           BorderRadius.circular(
@@ -796,9 +778,9 @@ class _SearchScreenState extends State<SearchScreen> {
                                                     child: Text(
                                                       movie.year,
                                                       style:
-                                                          GoogleFonts.poppins(
+                                                          GoogleFonts.aBeeZee(
                                                         color: Colors.white,
-                                                        fontSize: 10,
+                                                        fontSize: 15,
                                                         fontWeight:
                                                             FontWeight.bold,
                                                       ),
@@ -827,9 +809,9 @@ class _SearchScreenState extends State<SearchScreen> {
                                                     child: Text(
                                                       quality,
                                                       style:
-                                                          GoogleFonts.poppins(
+                                                          GoogleFonts.aBeeZee(
                                                         color: Colors.white,
-                                                        fontSize: 10,
+                                                        fontSize: 12,
                                                         fontWeight:
                                                             FontWeight.bold,
                                                       ),
@@ -849,7 +831,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                                       vertical: 2,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.green
+                                                      color: Colors.blue
                                                           .withOpacity(0.8),
                                                       borderRadius:
                                                           BorderRadius.circular(
@@ -858,9 +840,9 @@ class _SearchScreenState extends State<SearchScreen> {
                                                     child: Text(
                                                       language,
                                                       style:
-                                                          GoogleFonts.poppins(
+                                                          GoogleFonts.aBeeZee(
                                                         color: Colors.white,
-                                                        fontSize: 10,
+                                                        fontSize: 12,
                                                         fontWeight:
                                                             FontWeight.bold,
                                                       ),
@@ -880,10 +862,10 @@ class _SearchScreenState extends State<SearchScreen> {
                                           children: [
                                             Text(
                                               movie.title,
-                                              style: GoogleFonts.poppins(
+                                              style: GoogleFonts.aBeeZee(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 12,
+                                                fontSize: 15,
                                               ),
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
@@ -892,9 +874,9 @@ class _SearchScreenState extends State<SearchScreen> {
                                             if (episodeInfo.isNotEmpty)
                                               Text(
                                                 episodeInfo,
-                                                style: GoogleFonts.poppins(
+                                                style: GoogleFonts.aBeeZee(
                                                   color: Colors.grey.shade400,
-                                                  fontSize: 10,
+                                                  fontSize: 11,
                                                 ),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,

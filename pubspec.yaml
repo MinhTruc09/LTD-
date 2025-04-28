@@ -44,6 +44,7 @@ dependencies:
   google_fonts: ^6.1.0
   cached_network_image: ^3.3.1
   video_player: ^2.8.2
+  video_player_web: ^2.3.5
   chewie: ^1.7.1
   url_launcher: ^6.2.5
   webview_flutter: ^4.5.0
@@ -74,10 +75,7 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/images/movies/
     - assets/fonts/
-    - assets/icons/
-    - assets/json/
   fonts:
     - family: RubikDoodleShadow
       fonts:

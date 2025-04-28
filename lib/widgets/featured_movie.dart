@@ -54,9 +54,9 @@ class FeaturedMovie extends StatelessWidget {
                       children: [
                         Text(
                           movie.title,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.aBeeZee(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
@@ -67,9 +67,9 @@ class FeaturedMovie extends StatelessWidget {
                             if (movie.year.isNotEmpty)
                               Text(
                                 movie.year,
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.aBeeZee(
                                   color: Colors.white70,
-                                  fontSize: 12,
+                                  fontSize: 14,
                                 ),
                               ),
                             if (movie.year.isNotEmpty &&
@@ -82,9 +82,9 @@ class FeaturedMovie extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   movie.genres.join(' • '),
-                                  style: GoogleFonts.poppins(
+                                  style: GoogleFonts.aBeeZee(
                                     color: Colors.white70,
-                                    fontSize: 12,
+                                    fontSize: 14,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -106,9 +106,9 @@ class FeaturedMovie extends StatelessWidget {
                     ),
                     child: Text(
                       'Xem',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.aBeeZee(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

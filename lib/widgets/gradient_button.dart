@@ -34,7 +34,7 @@ class _GradientButtonState extends State<GradientButton>
       duration: const Duration(seconds: 3),
       vsync: this,
     );
-    tween = Tween<double>(begin: 0, end: 359);
+    tween = Tween<double>(begin: 0, end: 1);
     animation = controller.drive(tween);
 
     controller.forward();
@@ -79,32 +79,32 @@ class _GradientButtonState extends State<GradientButton>
                 child: Center(
                   child: widget.icon != null
                       ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              widget.icon,
-                              color: widget.iconColor ?? Colors.white,
-                              size: widget.fontSize + 4,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.text,
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                fontSize: widget.fontSize,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          widget.text,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            fontSize: widget.fontSize,
-                            color: Colors.white,
-                          ),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        color: widget.iconColor ?? Colors.white,
+                        size: widget.fontSize + 4,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        widget.text,
+                        style: GoogleFonts.aBeeZee(
+                          fontWeight: FontWeight.bold,
+                          fontSize: widget.fontSize,
+                          color: Colors.white,
                         ),
+                      ),
+                    ],
+                  )
+                      : Text(
+                    widget.text,
+                    style: GoogleFonts.aBeeZee(
+                      fontWeight: FontWeight.bold,
+                      fontSize: widget.fontSize,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             );
@@ -114,29 +114,16 @@ class _GradientButtonState extends State<GradientButton>
     );
   }
 
-  List<Color> _generateGradientColors(double offset) {
-    List<Color> colors = [];
-    const int divisions = 10;
-    for (int i = 0; i < divisions; i++) {
-      double hue = (360 / divisions) * i;
-      hue += offset;
-      if (hue > 360) {
-        hue -= 360;
-      }
-      final Color color = HSVColor.fromAHSV(1.0, hue, 1.0, 1.0).toColor();
-      colors.add(color);
-    }
-    colors.add(colors[0]);
-    return colors;
+  List<Color> _generateGradientColors(double value) {
+    // Tạo gradient từ xanh sang trắng
+    return [
+      Color.lerp(Color(0xFF3F54D1), Colors.white, value)!,
+      Color.lerp(Colors.white, Color(0xFF3F54D1), value)!,
+    ];
   }
 
   List<double> _generateGradientStops() {
-    const int divisions = 10;
-    List<double> stops = [];
-    for (int i = 0; i <= divisions; i++) {
-      stops.add(i / divisions);
-    }
-    return stops;
+    return [0.0, 1.0];
   }
 }
 

@@ -28,7 +28,7 @@ class DiagonalContainer extends StatelessWidget {
           ],
         ),
         border: Border.all(
-          color: const Color(0xFF3F54D1).withOpacity(0.5),
+          color: Colors.white,
           width: 1.5,
         ),
       ),
@@ -44,7 +44,7 @@ class DiagonalContainer extends StatelessWidget {
               ),
               child: Text(
                 title,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -61,7 +61,7 @@ class DiagonalContainer extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Divider(
                     color: Colors.white.withOpacity(0.1),
-                    thickness: 1,
+                    thickness: 2,
                   ),
                 ),
             ],

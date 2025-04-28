@@ -106,8 +106,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       // Nếu không có arguments, sử dụng thông tin từ widget props
       if (widget.episodes.isNotEmpty) {
         for (var ep in widget.episodes) {
-          if (ep is Map &&
-              ep.containsKey('link_m3u8') &&
+          if (ep.containsKey('link_m3u8') &&
               ep.containsKey('name')) {
             _episodes.add({
               'url': ep['link_m3u8'].toString(),
@@ -252,7 +251,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       });
 
       // Khởi tạo video player với timeout
-      bool initializeSuccess = false;
       try {
         await _videoPlayerController!.initialize().timeout(
           const Duration(seconds: 15),
@@ -260,7 +258,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             throw TimeoutException('Video khởi tạo quá lâu');
           },
         );
-        initializeSuccess = true;
       } catch (timeoutError) {
         print('Timeout khởi tạo video: $timeoutError');
         setState(() {
@@ -269,10 +266,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               'Thời gian tải video quá lâu. Vui lòng thử lại hoặc kiểm tra kết nối mạng.';
           _isLoading = false;
         });
-        return;
-      }
-
-      if (!initializeSuccess) {
         return;
       }
 
@@ -394,19 +387,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   // Phương thức để chuyển tập phim theo index (giữ lại để tương thích)
-  void _changeEpisode(int index) {
-    if (index >= 0 && index < _episodes.length) {
-      setState(() {
-        _currentEpisodeIndex = index;
-      });
-
-      String url = _validateAndProcessUrl(_episodes[index]['url'] ?? '');
-      if (url.isNotEmpty) {
-        _currentUrl = url;
-        _initializePlayer(_currentUrl);
-      }
-    }
-  }
 
   @override
   void dispose() {
@@ -734,7 +714,6 @@ class CustomMaterialControls extends MaterialControls {
 
   const CustomMaterialControls({this.movieTitle = 'Movieom'});
 
-  @override
   Widget buildTopBar(BuildContext context, ChewieController controller,
       Animation<double> controlsAnimation) {
     return Positioned(

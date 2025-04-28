@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/controllers/movie_controller.dart';
-import 'package:movieom_app/services/favoritemovieservice.dart';
+import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/widgets/category_filter.dart';
 import 'package:movieom_app/widgets/featured_movie.dart';
 import 'package:movieom_app/widgets/genre_grid.dart';
@@ -21,7 +21,6 @@ class MovieHomeScreen extends StatefulWidget {
 class _MovieHomeScreenState extends State<MovieHomeScreen> {
   final MovieController _movieController = MovieController();
   final AuthController _authController = AuthController();
-  List<MovieModel> _allMovies = [];
   List<MovieModel> _apiMovies = [];
   List<Map<String, dynamic>> _genres = [];
   List<MovieModel> _genreMovies = [];
@@ -63,12 +62,11 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
 
     try {
       final apiMovies = await _movieController.getAllMoviesFromApi();
-      final mockMovies = _movieController.getMockMovies();
+      _movieController.getMockMovies();
 
       if (mounted) {
         setState(() {
           _apiMovies = apiMovies;
-          _allMovies = apiMovies.isNotEmpty ? apiMovies : mockMovies;
           _isLoading = false;
         });
       }
@@ -76,7 +74,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       print('Lỗi khi tải phim: $e');
       if (mounted) {
         setState(() {
-          _allMovies = _movieController.getMockMovies();
           _isLoading = false;
         });
       }
@@ -182,7 +179,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           height: 48,
           child: FittedBox(
             fit: BoxFit.contain,
-            child: MovieomLogo(fontSize: 32),
+            child: MovieomLogo(fontSize: 35),
           ),
         ),
         titleSpacing: 0,
@@ -218,7 +215,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               child: SafeArea(
                 child: SingleChildScrollView(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       if (_selectedCategory == 'Thể loại')
                         _buildGenreContent()
@@ -249,9 +246,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             padding: const EdgeInsets.only(left: 16.0, top: 8.0, right: 16.0),
             child: Text(
               'Phim thể loại: $_selectedGenreName',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.aBeeZee(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 19,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -290,7 +287,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               padding: const EdgeInsets.all(20.0),
               child: Text(
                 'Không tìm thấy phim nào thuộc thể loại này',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white70,
                   fontSize: 14,
                 ),
@@ -326,9 +323,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             padding: const EdgeInsets.only(top: 2),
             child: Text(
               movie.title,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.aBeeZee(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
               maxLines: 1,
@@ -340,9 +337,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               height: 15,
               child: Text(
                 movie.year,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.grey[400],
-                  fontSize: 10,
+                  fontSize: 11,
                 ),
                 maxLines: 1,
               ),
@@ -466,8 +463,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Divider(
-            color: Colors.grey[800],
-            thickness: 1.0,
+            color: Colors.white,
+            thickness: 2.0,
           ),
         ),
         ..._buildGenreMovieSections(),
@@ -530,8 +527,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Divider(
-              color: Colors.grey[800],
-              thickness: 1.0,
+              color: Colors.white,
+              thickness:2.0,
             ),
           ));
         }
@@ -551,7 +548,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             children: [
               Text(
                 message,
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.aBeeZee(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
