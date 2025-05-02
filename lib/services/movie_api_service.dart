@@ -872,4 +872,114 @@ class MovieApiService {
 
     return null;
   }
+
+  // Thêm phương thức lấy danh sách quốc gia từ API
+  Future<List<Map<String, dynamic>>> getAllCountries() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/quoc-gia'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data
+            .map((country) => {
+                  'name': country['name']?.toString() ?? 'Unknown',
+                  'slug': country['slug']?.toString() ?? '',
+                })
+            .toList();
+      } else {
+        print('Lỗi khi lấy danh sách quốc gia: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Lỗi khi lấy danh sách quốc gia: $e');
+      return [];
+    }
+  }
+
+  // Phương thức lấy phim theo quốc gia từ API
+  Future<List<MovieModel>> getMoviesByCountryFromApi(String slug,
+      {int page = 1}) async {
+    try {
+      // Xây dựng URL với các tham số mặc định
+      final url = Uri.parse(
+          '$baseUrl/v1/api/quoc-gia/$slug?page=$page&sort_field=_id&sort_type=asc&sort_lang=vietsub&limit=10');
+
+      print('Gọi API lấy phim theo quốc gia: $url');
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        // Kiểm tra cấu trúc dữ liệu trả về
+        if (data['status'] == "success" &&
+            data['data'] != null &&
+            data['data']['items'] != null) {
+          List<MovieModel> movies = [];
+
+          // Xử lý danh sách phim
+          for (var item in data['data']['items']) {
+            // Xử lý URL hình ảnh
+            String imageUrl = '';
+            if (item['poster_url'] != null && item['poster_url'].isNotEmpty) {
+              if (item['poster_url'].startsWith('http')) {
+                imageUrl = item['poster_url'];
+              } else {
+                String cdnUrl = data['data']['APP_DOMAIN_CDN_IMAGE'] ??
+                    'https://phimimg.com';
+                imageUrl = '$cdnUrl/${item['poster_url']}';
+              }
+            }
+
+            // Xử lý danh sách thể loại
+            List<String> genreNames = [];
+            if (item['category'] != null) {
+              for (var genre in item['category']) {
+                genreNames.add(genre['name'] ?? '');
+              }
+            }
+
+            // Xử lý danh sách quốc gia
+            List<String> countries = [];
+            if (item['country'] != null) {
+              for (var country in item['country']) {
+                countries.add(country['name'] ?? '');
+              }
+            }
+
+            movies.add(MovieModel(
+              id: item['_id'] ?? '',
+              title: item['name'] ?? 'Không có tiêu đề',
+              imageUrl: imageUrl,
+              description: item['origin_name'] ?? '',
+              category: 'Quốc gia',
+              genres: genreNames,
+              year: item['year'] != null ? item['year'].toString() : '',
+              isFavorite: false,
+              extraInfo: {
+                'slug': item['slug'] ?? '',
+                'countries': countries,
+                'episode_current': item['episode_current'] ?? 'Full',
+                'quality': item['quality'] ?? 'HD',
+                'lang': item['lang'] ?? 'Vietsub',
+              },
+            ));
+          }
+
+          print('Đã tải ${movies.length} phim từ quốc gia $slug');
+          return movies;
+        } else {
+          print(
+              'API trả về không thành công: ${data['msg'] ?? "Không có dữ liệu"}');
+          return [];
+        }
+      } else {
+        print(
+            'Lỗi khi gọi API quốc gia: ${response.statusCode} - ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Lỗi khi tải phim theo quốc gia $slug: $e');
+      return [];
+    }
+  }
 }

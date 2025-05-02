@@ -1,5 +1,3 @@
-
-
 class MovieDetailModel {
   final bool status;
   final String msg;
@@ -73,8 +71,8 @@ class MovieData {
   final String name;
   final String originName;
   final String content;
-  final String posterUrl;
-  final String thumbUrl;
+  late final String posterUrl;
+  late final String thumbUrl;
   final String type;
   final String status;
   final String episodeCurrent;

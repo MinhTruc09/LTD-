@@ -1,4 +1,3 @@
-// movie_home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
@@ -10,6 +9,7 @@ import 'package:movieom_app/widgets/featured_movie.dart';
 import 'package:movieom_app/widgets/genre_grid.dart';
 import 'package:movieom_app/widgets/movie_category_section.dart';
 import 'package:movieom_app/widgets/movieom_logo.dart';
+import 'package:movieom_app/widgets/country_grid.dart';
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -23,21 +23,25 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   final AuthController _authController = AuthController();
   List<MovieModel> _apiMovies = [];
   List<Map<String, dynamic>> _genres = [];
+  List<Map<String, dynamic>> _countries = [];
   List<MovieModel> _genreMovies = [];
+  List<MovieModel> _countryMovies = [];
 
   Map<String, List<MovieModel>> _genreMoviesMap = {};
   Map<String, bool> _genreLoadingMap = {};
 
   bool _isLoading = true;
   bool _isLoadingGenreMovies = false;
+  bool _isLoadingCountryMovies = false;
   String _selectedCategory = 'Tất cả';
   final List<String> _categories = [
     'Tất cả',
     'Xu hướng',
-    'Diễn viên',
+    'Quốc gia',
     'Thể loại'
   ];
   String _selectedGenreName = '';
+  String _selectedCountryName = '';
 
   final int _maxGenresOnHome = 5;
   final List<String> _popularGenreSlugs = [
@@ -53,17 +57,17 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     super.initState();
     _loadMovies();
     _loadGenres();
+    _loadCountries();
   }
 
   Future<void> _loadMovies() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     try {
       final apiMovies = await _movieController.getAllMoviesFromApi();
-      _movieController.getMockMovies();
-
       if (mounted) {
         setState(() {
           _apiMovies = apiMovies;
@@ -91,6 +95,19 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       }
     } catch (e) {
       print('Lỗi khi tải thể loại: $e');
+    }
+  }
+
+  Future<void> _loadCountries() async {
+    try {
+      final countries = await _movieController.getAllCountries();
+      if (mounted) {
+        setState(() {
+          _countries = countries;
+        });
+      }
+    } catch (e) {
+      print('Lỗi khi tải quốc gia: $e');
     }
   }
 
@@ -144,6 +161,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   }
 
   Future<void> _loadMoviesByGenre(String slug, String genreName) async {
+    if (!mounted) return;
     setState(() {
       _isLoadingGenreMovies = true;
       _selectedGenreName = genreName;
@@ -163,6 +181,32 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         setState(() {
           _genreMovies = [];
           _isLoadingGenreMovies = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadMoviesByCountry(String slug, String countryName) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingCountryMovies = true;
+      _selectedCountryName = countryName;
+    });
+
+    try {
+      final movies = await _movieController.getMoviesByCountryFromApi(slug);
+      if (mounted) {
+        setState(() {
+          _countryMovies = movies;
+          _isLoadingCountryMovies = false;
+        });
+      }
+    } catch (e) {
+      print('Lỗi khi tải phim theo quốc gia: $e');
+      if (mounted) {
+        setState(() {
+          _countryMovies = [];
+          _isLoadingCountryMovies = false;
         });
       }
     }
@@ -190,11 +234,14 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             categories: _categories,
             selectedCategory: _selectedCategory,
             onCategorySelected: (category) {
+              if (!mounted) return;
               setState(() {
                 _selectedCategory = category;
-                if (category != 'Thể loại') {
+                if (category != 'Thể loại' && category != 'Quốc gia') {
                   _selectedGenreName = '';
                   _genreMovies = [];
+                  _selectedCountryName = '';
+                  _countryMovies = [];
                 }
               });
             },
@@ -219,6 +266,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                     children: [
                       if (_selectedCategory == 'Thể loại')
                         _buildGenreContent()
+                      else if (_selectedCategory == 'Quốc gia')
+                        _buildCountryContent()
                       else
                         _buildMovieContent(),
                     ],
@@ -300,6 +349,77 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
+  Widget _buildCountryContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_countries.isNotEmpty)
+          CountryGrid(
+            countries: _countries,
+            onCountrySelected: (slug, name) {
+              _loadMoviesByCountry(slug, name);
+            },
+          ),
+        const SizedBox(height: 16),
+        if (_selectedCountryName.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 8.0, right: 16.0),
+            child: Text(
+              'Phim quốc gia: $_selectedCountryName',
+              style: GoogleFonts.aBeeZee(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        if (_isLoadingCountryMovies)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+              ),
+            ),
+          )
+        else if (_countryMovies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 0.7,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              padding: const EdgeInsets.all(16),
+              itemCount: _countryMovies.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return _buildGenreMovieItem(_countryMovies[index]);
+              },
+            ),
+          )
+        else if (_selectedCountryName.isNotEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                'Không tìm thấy phim nào thuộc quốc gia này',
+                style: GoogleFonts.aBeeZee(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+
   Widget _buildGenreMovieItem(MovieModel movie) {
     return GestureDetector(
       onTap: () {
@@ -349,8 +469,10 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  Widget _buildImage(String imageUrl) {
-    if (imageUrl.startsWith('http')) {
+  Widget _buildImage(String? imageUrl) {
+    if (imageUrl != null &&
+        imageUrl.isNotEmpty &&
+        imageUrl.startsWith('http')) {
       return Image.network(
         imageUrl,
         fit: BoxFit.cover,
@@ -372,7 +494,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           );
         },
         errorBuilder: (context, error, stackTrace) {
-          print('Lỗi tải hình ảnh: $error');
+          print('Lỗi tải hình ảnh từ URL: $imageUrl, lỗi: $error');
           return Container(
             color: Colors.grey[800],
             child: const Icon(
@@ -383,6 +505,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         },
       );
     } else {
+      print('imageUrl không hợp lệ hoặc rỗng: $imageUrl');
       return Container(
         color: Colors.grey[800],
         child: const Icon(
@@ -402,7 +525,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           FeaturedMovie(
             movie: _apiMovies[0],
             onTap: () async {
-              // Kiểm tra xem phim có trong danh sách yêu thích không
               bool isFavorite = false;
               try {
                 final userId =
@@ -412,7 +534,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                   isFavorite =
                       await favoriteService.isMovieFavorite(_apiMovies[0].id);
 
-                  // Nếu không tìm thấy theo ID, thử kiểm tra bằng slug
                   if (!isFavorite &&
                       _apiMovies[0].extraInfo != null &&
                       _apiMovies[0].extraInfo!.containsKey('slug')) {
@@ -426,47 +547,63 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                 print('Lỗi kiểm tra yêu thích trong trang chủ: $e');
               }
 
-              Navigator.pushNamed(
-                context,
-                '/movie_detail',
-                arguments: {
-                  'movie': _apiMovies[0],
-                  'isFavorite': isFavorite,
-                  'fromHomeScreen': true
-                },
-              );
+              if (mounted) {
+                Navigator.pushNamed(
+                  context,
+                  '/movie_detail',
+                  arguments: {
+                    'movie': _apiMovies[0],
+                    'isFavorite': isFavorite,
+                    'fromHomeScreen': true
+                  },
+                );
+              }
             },
+          )
+        else
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(
+              child: Text(
+                'Không có phim nào để hiển thị',
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            ),
           ),
-        Padding(
-          padding: const EdgeInsets.only(
-              top: 16.0, bottom: 8.0, left: 16.0, right: 16.0),
-          child: Divider(
-            color: Colors.grey[800],
-            thickness: 1.0,
+        if (_apiMovies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+                top: 16.0, bottom: 8.0, left: 16.0, right: 16.0),
+            child: Divider(
+              color: Colors.grey[800],
+              thickness: 1.0,
+            ),
           ),
-        ),
         if (_apiMovies.length > 1)
           MovieCategorySection(
             title: 'Phim Mới Cập Nhật',
             movies: _apiMovies.skip(1).take(10).toList(),
             onViewAll: () {
-              Navigator.pushNamed(
-                context,
-                '/category_movies',
-                arguments: {
-                  'category': 'Phim Mới',
-                  'movies': _apiMovies,
-                },
-              );
+              if (mounted) {
+                Navigator.pushNamed(
+                  context,
+                  '/category_movies',
+                  arguments: {
+                    'category': 'Phim Mới',
+                    'movies': _apiMovies,
+                  },
+                );
+              }
             },
           ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Divider(
-            color: Colors.white,
-            thickness: 2.0,
+        if (_apiMovies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Divider(
+              color: Colors.white,
+              thickness: 2.0,
+            ),
           ),
-        ),
         ..._buildGenreMovieSections(),
         const SizedBox(height: 80),
       ],
@@ -511,14 +648,16 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
           title: 'Phim $name',
           movies: movies,
           onViewAll: () {
-            Navigator.pushNamed(
-              context,
-              '/category_movies',
-              arguments: {
-                'category': name,
-                'movies': movies,
-              },
-            );
+            if (mounted) {
+              Navigator.pushNamed(
+                context,
+                '/category_movies',
+                arguments: {
+                  'category': name,
+                  'movies': movies,
+                },
+              );
+            }
           },
         ));
 
@@ -528,7 +667,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: Divider(
               color: Colors.white,
-              thickness:2.0,
+              thickness: 2.0,
             ),
           ));
         }
