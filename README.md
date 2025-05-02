@@ -65,7 +65,7 @@ Movieom là ứng dụng xem phim trực tuyến với giao diện thân thiện
 
 ## Nguồn dữ liệu phim
 
-Ứng dụng sử dụng phimapi.com làm nguồn dữ liệu chính, cung cấp:
+Ứng dụng sử dụng [phimapi.com](https://kkphim.com/tai-lieu-api) làm nguồn dữ liệu chính, cung cấp:
 - Thông tin phim
 - Poster và hình ảnh
 - Đường dẫn xem phim
