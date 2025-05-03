@@ -54,8 +54,8 @@ class Favoritemovieservice {
       return slug;
     }
 
-    // Trường hợp không có ID và slug, dùng title với timestamp
-    return '${movie.title}_${DateTime.now().millisecondsSinceEpoch}';
+    // Nếu không có ID và slug, dùng hash của title để tạo ID duy nhất
+    return 'auto_${movie.title.hashCode.abs()}';
   }
 
   // Thêm ID phim vào danh sách IDs yêu thích
@@ -133,6 +133,13 @@ class Favoritemovieservice {
       final docId = _getDocumentId(movie);
       final slug = _getMovieSlug(movie);
 
+      // Kiểm tra xem phim đã tồn tại chưa
+      final docSnap = await _getFavoritesCollection().doc(docId).get();
+      if (docSnap.exists) {
+        print('Phim đã tồn tại với ID: $docId, không thêm lại.');
+        return; // Thoát nếu phim đã tồn tại
+      }
+
       print('Lưu phim yêu thích với ID: $docId, Slug: $slug');
 
       // Thêm thông tin slug vào extraInfo nếu chưa có
@@ -153,7 +160,6 @@ class Favoritemovieservice {
       // Nếu có slug và khác ID, thêm reference document
       if (slug != null && slug != docId) {
         print('Tạo reference với slug: $slug -> ID: $docId');
-        // Tạo một document nhỏ trỏ đến ID chính
         await _firestore
             .collection('users')
             .doc(_userId)
@@ -210,6 +216,7 @@ class Favoritemovieservice {
       // Lọc ra các document chính (không phải reference)
       final docs = querySnapshot.docs;
       List<MovieModel> movies = [];
+      Set<String> uniqueIds = {}; // Để theo dõi các ID đã thêm
 
       for (var doc in docs) {
         final data = doc.data();
@@ -219,10 +226,14 @@ class Favoritemovieservice {
             !(data.extraInfo != null &&
                 data.extraInfo!.containsKey('is_reference') &&
                 data.extraInfo!['is_reference'] == true)) {
-          movies.add(data);
+          // Chỉ thêm nếu ID chưa tồn tại
+          if (uniqueIds.add(data.id)) {
+            movies.add(data);
+          }
         }
       }
 
+      print('Fetched favorites: ${movies.map((m) => m.toString()).toList()}');
       return movies;
     } catch (e) {
       print('Error getting favorites for user $_userId: $e');
@@ -232,6 +243,7 @@ class Favoritemovieservice {
 
   Stream<List<MovieModel>> streamFavorites() {
     return _getFavoritesCollection().snapshots().map((snapshot) {
+      Set<String> uniqueIds = {};
       return snapshot.docs
           .where((doc) =>
               doc.id != 'placeholder' &&
@@ -240,6 +252,7 @@ class Favoritemovieservice {
                   doc.data().extraInfo!.containsKey('is_reference') &&
                   doc.data().extraInfo!['is_reference'] == true))
           .map((doc) => doc.data())
+          .where((movie) => uniqueIds.add(movie.id))
           .toList();
     });
   }

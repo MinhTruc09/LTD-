@@ -55,22 +55,18 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   }
 
   Future<void> _loadMovieDetails() async {
-    // Get the movie passed as argument
     final args = ModalRoute.of(context)?.settings.arguments;
 
-    // Xử lý trường hợp arguments là Map (từ màn hình yêu thích)
     MovieModel? movieArg;
     bool? initialFavoriteState;
     bool fromFavoriteScreen = false;
 
     if (args is Map) {
-      // Parse các tham số từ map
       movieArg = args['movie'] as MovieModel?;
       initialFavoriteState = args['isFavorite'] as bool?;
-      fromFavoriteScreen = args['fromFavoriteScreen'] as bool? ?? false;
+      fromFavoriteScreen = args['fromHomeScreen'] as bool? ?? false;
 
       if (initialFavoriteState == true) {
-        // Đã biết trạng thái yêu thích từ màn hình truyền qua
         setState(() {
           _isFavorite = true;
         });
@@ -88,13 +84,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       });
 
       try {
-        // Chỉ kiểm tra trạng thái yêu thích nếu không phải đến từ màn hình yêu thích
         if (!fromFavoriteScreen) {
-          // Check if movie is in favorites
           await _checkFavoriteStatus(movieArg.id);
         }
 
-        // Xác định slug từ thông tin phim
         String movieSlug = '';
         if (movie!.extraInfo != null && movie!.extraInfo!.containsKey('slug')) {
           movieSlug = movie!.extraInfo!['slug'];
@@ -103,8 +96,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         }
 
         print('Đang tải chi tiết phim với slug/id: $movieSlug');
-
-        // Sử dụng service để tải dữ liệu phim
         final movieDetailResult = await _apiService.getMovieDetailV3(
           movieSlug,
           fallbackModel: movie,
@@ -116,28 +107,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             movieDetail = movieDetailResult;
             isLoading = false;
           });
-
-          // Debug thông tin hiển thị
-          print('Loaded movie detail:');
-          print('Title: ${movieDetail?.movie.name}');
-          print('Overview available: ${movieDetail?.movie.content.isNotEmpty}');
-          print('Actors available: ${movieDetail?.movie.actor.length ?? 0}');
-          print(
-              'Overview: ${movieDetail?.movie.content.substring(0, min(50, movieDetail?.movie.content.length ?? 0))}...');
-
-          // Additional debug info
-          print('Is series movie: ${movieDetail?.isSeriesMovie}');
-          print('Has episodes: ${movieDetail?.hasEpisodes}');
-          if (movieDetail?.hasEpisodes == true) {
-            print('Episode servers: ${movieDetail?.episodes.length}');
-            for (int i = 0; i < (movieDetail?.episodes.length ?? 0); i++) {
-              print('Server ${i + 1}: ${movieDetail?.episodes[i].serverName}');
-              print(
-                  'Episodes count: ${movieDetail?.episodes[i].serverData.length}');
-            }
-          } else {
-            print('No episodes found!');
-          }
+          print('Loaded movie detail: Title: ${movieDetail?.movie.name}');
         } else {
           throw Exception('Failed to load movie details');
         }
@@ -145,7 +115,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         print('Error loading movie details: $e');
         if (!mounted) return;
         setState(() {
-          // Hiển thị thông báo lỗi
           errorMessage = 'Không thể tải thông tin phim: ${e.toString()}';
           isLoading = false;
         });
@@ -168,11 +137,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
     try {
       print('Đang kiểm tra trạng thái yêu thích cho phim với ID: $movieId');
-
-      // Kiểm tra theo ID trước
       bool isFavorite = await _favoriteService.isMovieFavorite(movieId);
 
-      // Nếu không tìm thấy theo ID, thử kiểm tra bằng slug nếu có
       if (!isFavorite &&
           movie?.extraInfo != null &&
           movie!.extraInfo!.containsKey('slug')) {
@@ -180,10 +146,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         if (slug != null && slug.isNotEmpty && slug != movieId) {
           print('Không tìm thấy theo ID, kiểm tra theo slug: $slug');
           final isFavoriteBySlug = await _favoriteService.isMovieFavorite(slug);
-          if (isFavoriteBySlug) {
-            print('Đã tìm thấy phim yêu thích bằng slug: $slug');
-            isFavorite = true;
-          }
+          if (isFavoriteBySlug) isFavorite = true;
         }
       }
 
@@ -222,17 +185,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
     try {
       print('Thông tin phim: ID=${movie!.id}, Title=${movie!.title}');
-      if (movie!.extraInfo != null && movie!.extraInfo!.containsKey('slug')) {
-        print('Slug=${movie!.extraInfo!['slug']}');
-      }
-
       if (_isFavorite) {
-        // Remove from favorites - Hiển thị UI đang xóa
-        setState(() {
-          // Hiệu ứng đang xóa: Vẫn giữ nút màu hồng nhưng có loading
-          _isCheckingFavorite = true;
-        });
-
         await _favoriteService.removeFavorite(movie!);
         if (mounted) {
           setState(() {
@@ -248,19 +201,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               action: SnackBarAction(
                 label: 'Hoàn tác',
                 textColor: Colors.white,
-                onPressed: () =>
-                    _toggleFavorite(), // Gọi lại toggle để thêm lại
+                onPressed: () => _toggleFavorite(),
               ),
             ),
           );
         }
       } else {
-        // Add to favorites - Hiển thị UI đang thêm
-        setState(() {
-          // Hiệu ứng đang thêm: nút vẫn màu xanh nhưng có loading
-          _isCheckingFavorite = true;
-        });
-
         await _favoriteService.addFavorite(movie!);
         if (mounted) {
           setState(() {
@@ -295,39 +241,48 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(
+            context, _isFavorite); // Truyền ngược trạng thái khi quay lại
+        return true;
+      },
+      child: Scaffold(
         backgroundColor: Colors.black,
-        title: Text(
-          movieDetail?.movie.name ?? 'Chi tiết phim',
-          style: GoogleFonts.aBeeZee(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          title: Text(
+            movieDetail?.movie.name ?? 'Chi tiết phim',
+            style: GoogleFonts.aBeeZee(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            onPressed: () {
+              Navigator.pop(context, _isFavorite); // Truyền ngược trạng thái
+            },
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        body: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+                ),
+              )
+            : errorMessage != null
+                ? Center(
+                    child: Text(
+                      errorMessage!,
+                      style: GoogleFonts.aBeeZee(color: Colors.white),
+                    ),
+                  )
+                : _buildMovieDetails(),
+        bottomNavigationBar:
+            isLoading || errorMessage != null ? null : _buildBottomActionBar(),
       ),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-              ),
-            )
-          : errorMessage != null
-              ? Center(
-                  child: Text(
-                    errorMessage!,
-                    style: GoogleFonts.aBeeZee(color: Colors.white),
-                  ),
-                )
-              : _buildMovieDetails(),
-      bottomNavigationBar:
-          isLoading || errorMessage != null ? null : _buildBottomActionBar(),
     );
   }
 
@@ -344,7 +299,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          // Nút Favorite với animation
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             decoration: BoxDecoration(
@@ -395,8 +349,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               ),
             ),
           ),
-
-          // Nút xem phim
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF3F54D1),
@@ -408,7 +360,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
             onPressed: _handleWatchMovie,
             icon: const Icon(Icons.play_arrow),
-            label:  Text('Xem phim',style: GoogleFonts.aBeeZee(color: Colors.white),),
+            label: Text('Xem phim',
+                style: GoogleFonts.aBeeZee(color: Colors.white)),
           ),
         ],
       ),
@@ -429,42 +382,23 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hero image with gradient overlay and trailer button
           _buildHeroImage(posterUrl),
-
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Movie title section
                 _buildTitleSection(),
-
                 const SizedBox(height: 16),
-
-                // Key info badges section
                 _buildKeyInfoBadges(),
-
                 const SizedBox(height: 24),
-
-                // Content/overview section - Luôn hiển thị, kể cả khi không có nội dung
                 _buildContentSection(),
-
                 const SizedBox(height: 24),
-
-                // Technical details card
                 _buildTechnicalDetails(),
-
                 const SizedBox(height: 24),
-
-                // Episode selector - should always appear if episodes exist
                 if (movieDetail!.hasEpisodes) _buildEpisodeSelector(),
-
-                // Cast and crew section
                 if (movieDetail!.hasActors || movieDetail!.hasDirectors)
                   _buildCastAndCrew(),
-
-                // Padding ở dưới cùng để tránh bị che bởi bottom action bar
                 const SizedBox(height: 80),
               ],
             ),
@@ -474,7 +408,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // Hero image with gradient overlay and trailer button
   Widget _buildHeroImage(String posterUrl) {
     return Stack(
       children: [
@@ -494,7 +427,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   ),
                 ),
         ),
-        // Overlay gradient for better text visibility
         Positioned(
           bottom: 0,
           left: 0,
@@ -514,7 +446,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
           ),
         ),
-        // Trailer button if available
         if (movieDetail!.hasTrailer)
           Positioned(
             right: 16,
@@ -530,7 +461,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
-                // Navigate to trailer using video player
                 final trailerUrl = movieDetail!.movie.trailerUrl;
                 if (trailerUrl.isNotEmpty) {
                   Navigator.pushNamed(
@@ -555,12 +485,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // Title section with original name
   Widget _buildTitleSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Movie title
         Text(
           movieDetail!.movie.name,
           style: GoogleFonts.aBeeZee(
@@ -569,8 +497,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-
-        // Original title if available
         if (movieDetail!.movie.originName.isNotEmpty)
           Text(
             movieDetail!.movie.originName,
@@ -584,50 +510,38 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // Key info badges section (quality, language, etc.)
   Widget _buildKeyInfoBadges() {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        // Quality badge
         _buildInfoBadge(
           movieDetail!.movie.quality,
           Icons.high_quality,
           Colors.green,
         ),
-
-        // Language badge
         _buildInfoBadge(
           movieDetail!.movie.lang,
           Icons.language,
           Color(0xFF3F54D1),
         ),
-
-        // Time/Duration badge
         if (movieDetail!.movie.time.isNotEmpty)
           _buildInfoBadge(
             movieDetail!.movie.time,
             Icons.timer,
             Colors.purple,
           ),
-
-        // Year badge
         if (movieDetail!.movie.year != 0)
           _buildInfoBadge(
             movieDetail!.movie.year.toString(),
             Icons.calendar_today,
             Colors.amber,
           ),
-
-        // Status badge (ongoing/completed)
         _buildInfoBadge(
           movieDetail!.displayStatus,
           Icons.info_outline,
           Colors.teal,
         ),
-
-        // Type badge (series/movie)
         _buildInfoBadge(
           movieDetail!.displayType,
           Icons.movie_outlined,
@@ -637,12 +551,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // Content/Overview section
   Widget _buildContentSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Text(
+        Text(
           'Nội dung phim',
           style: GoogleFonts.aBeeZee(
             fontSize: 18,
@@ -654,20 +567,18 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           movieDetail!.movie.content.isNotEmpty
               ? movieDetail!.movie.content
               : 'Không có mô tả cho phim này.',
-          style:  GoogleFonts.aBeeZee(fontSize: 16),
+          style: GoogleFonts.aBeeZee(fontSize: 16),
         ),
       ],
     );
   }
 
-  // Technical details card with genre, duration, production company and language
   Widget _buildTechnicalDetails() {
     final movie = movieDetail!.movie;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Text(
+        Text(
           'Thông tin kỹ thuật',
           style: GoogleFonts.aBeeZee(
             fontSize: 18,
@@ -675,33 +586,19 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           ),
         ),
         const SizedBox(height: 8),
-
-        // Thể loại
         if (movie.category.isNotEmpty)
           _buildDetailRow(
               'Thể loại:', movie.category.map((c) => c.name).join(', ')),
-
-        // Thời lượng
         if (movie.time.isNotEmpty) _buildDetailRow('Thời lượng:', movie.time),
-
-        // Năm phát hành
         if (movie.year > 0)
           _buildDetailRow('Năm phát hành:', movie.year.toString()),
-
-        // Ngôn ngữ
         _buildDetailRow('Ngôn ngữ:', movie.lang),
-
-        // Chất lượng
         if (movie.quality.isNotEmpty)
           _buildDetailRow('Chất lượng:', movie.quality),
-
-        // Công ty sản xuất
         if (movie.productionCompanies != null &&
             movie.productionCompanies!.isNotEmpty)
           _buildDetailRow(
               'Công ty sản xuất:', movie.productionCompanies!.join(', ')),
-
-        // Ngôn ngữ gốc
         if (movie.spokenLanguages != null && movie.spokenLanguages!.isNotEmpty)
           _buildDetailRow('Ngôn ngữ gốc:', movie.spokenLanguages!.join(', ')),
       ],
@@ -735,7 +632,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // Method to build episode selector
   Widget _buildEpisodeSelector() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -758,8 +654,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Server tabs if multiple servers
           if (movieDetail!.episodes.length > 1)
             Container(
               height: 50,
@@ -776,10 +670,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     padding: const EdgeInsets.all(8.0),
                     child: ElevatedButton(
                       onPressed: () {
-                        // Show episodes for this server
                         setState(() {
                           _selectedServerIndex = index;
-                          _selectedEpisodeIndex = 0; // Reset episode selection
+                          _selectedEpisodeIndex = 0;
                         });
                       },
                       style: ElevatedButton.styleFrom(
@@ -798,22 +691,16 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 },
               ),
             ),
-
           const SizedBox(height: 16),
-
-          // Episode grid
           if (movieDetail!.episodes.isNotEmpty) _buildEpisodeGrid(),
         ],
       ),
     );
   }
 
-  // Selected server index
   int _selectedServerIndex = 0;
-  // Selected episode index
   int _selectedEpisodeIndex = 0;
 
-  // Method to build episode grid
   Widget _buildEpisodeGrid() {
     if (_selectedServerIndex >= movieDetail!.episodes.length) {
       return Center(
@@ -838,7 +725,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Show episode count information
         Text(
           'Tổng số: ${episodes.length} tập${episodes.length > 0 ? " (Chọn tập ${_selectedEpisodeIndex + 1} - ${episodes[_selectedEpisodeIndex].name})" : ""}',
           style: GoogleFonts.aBeeZee(
@@ -846,7 +732,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             fontSize: 14,
           ),
         ),
-        // Show server information
         Text(
           'Server: ${movieDetail!.episodes[_selectedServerIndex].serverName}',
           style: GoogleFonts.aBeeZee(
@@ -856,8 +741,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           ),
         ),
         const SizedBox(height: 12),
-
-        // Episode grid with improved styling
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -871,14 +754,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           itemBuilder: (context, index) {
             final episode = episodes[index];
             final isSelected = _selectedEpisodeIndex == index;
-
             return GestureDetector(
               onTap: () {
                 setState(() {
                   _selectedEpisodeIndex = index;
                 });
-
-                // Play this episode
                 _playEpisode(episode);
               },
               child: Container(
@@ -922,15 +802,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     );
   }
 
-  // Method to play an episode
   void _playEpisode(EpisodeData episode) {
-    // Debug episode data
     print('Đang xử lý episode: ${episode.name}');
     print('Link M3U8: ${episode.linkM3u8}');
     print('Link Embed: ${episode.linkEmbed}');
 
     try {
-      // Lấy danh sách tất cả các tập từ tất cả các server
       final allEpisodes = movieDetail?.episodes
               .asMap()
               .entries
@@ -953,7 +830,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               .toList() ??
           [];
 
-      // Tìm index của tập hiện tại trong danh sách tất cả các tập
       final currentEpisodeIndex = allEpisodes.indexWhere(
         (e) =>
             e['name'] == episode.name &&
@@ -969,23 +845,20 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         return;
       }
 
-      // Ưu tiên link m3u8 để phát trong ứng dụng
       if (episode.linkM3u8.isNotEmpty) {
         Navigator.pushNamed(
           context,
           '/video_player',
           arguments: {
-            'videoUrl': '', // Không dùng videoUrl trực tiếp
+            'videoUrl': '',
             'title': '${movieDetail?.movie.name} - ${episode.name}',
             'isEmbed': false,
-            'm3u8Url': episode.linkM3u8, // Truyền m3u8Url riêng
+            'm3u8Url': episode.linkM3u8,
             'episodes': allEpisodes,
             'currentEpisodeIndex': currentEpisodeIndex,
           },
         );
-      }
-      // Nếu không có m3u8, dùng embed (không khuyến khích)
-      else if (episode.linkEmbed.isNotEmpty) {
+      } else if (episode.linkEmbed.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
@@ -1026,7 +899,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
     if (movieDetail!.hasEpisodes) {
       try {
-        // Kiểm tra server và tập phim hợp lệ
         if (_selectedServerIndex >= movieDetail!.episodes.length) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Server không hợp lệ')),
@@ -1046,8 +918,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ? _selectedEpisodeIndex
             : 0;
         final episode = server.serverData[episodeIndex];
-
-        // Phát tập phim đã chọn
         _playEpisode(episode);
       } catch (e) {
         print('Error handling episodes: $e');
@@ -1056,13 +926,13 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         );
       }
     } else {
-      // Trường hợp không có tập phim (phim lẻ)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Chức năng xem phim lẻ sẽ được cập nhật sau')),
       );
     }
   }
+
   Widget _buildInfoBadge(String text, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1088,6 +958,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       ),
     );
   }
+
   Widget _buildImage(String imageUrl, double width, double height) {
     if (imageUrl.startsWith('http')) {
       return CachedNetworkImage(
@@ -1145,7 +1016,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       );
     }
   }
-  // Method to build a better formatted cast and crew section
+
   Widget _buildCastAndCrew() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1165,8 +1036,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Directors
           if (movieDetail!.hasDirectors) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1215,8 +1084,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
             const SizedBox(height: 16),
           ],
-
-          // Actors
           if (movieDetail!.hasActors) ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,

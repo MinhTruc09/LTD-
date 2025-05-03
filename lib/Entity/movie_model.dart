@@ -9,7 +9,7 @@ class MovieModel {
   final String description;
   final String category;
   final List<String> genres;
-  final bool isFavorite;
+  late final bool isFavorite;
   final String year;
   final Map<String, dynamic>? extraInfo;
 

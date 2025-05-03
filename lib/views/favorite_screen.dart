@@ -88,6 +88,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
     try {
       final favorites = await _favoriteService.getFavorites();
       if (!mounted) return;
+      print('Loaded favorites in FavoriteScreen: $favorites'); // Debug
       setState(() {
         favoriteMovies = favorites;
         isPlayingList = List.generate(favoriteMovies.length, (_) => false);
@@ -127,7 +128,10 @@ class _FavoriteScreenState extends State<FavoriteScreen>
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Đã xóa "${movie.title}" khỏi yêu thích',style: GoogleFonts.aBeeZee(color: Colors.white),),
+          content: Text(
+            'Đã xóa "${movie.title}" khỏi yêu thích',
+            style: GoogleFonts.aBeeZee(color: Colors.white),
+          ),
           behavior: SnackBarBehavior.floating,
           backgroundColor: Color(0xFF3F54D1),
           action: SnackBarAction(
@@ -189,7 +193,6 @@ class _FavoriteScreenState extends State<FavoriteScreen>
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           itemCount: favoriteMovies.length,
           itemBuilder: (context, index) {
-            // Tạo hiệu ứng delay cho từng item
             Future.delayed(Duration(milliseconds: 100 * index), () {
               if (_animationController.status != AnimationStatus.completed) {
                 _animationController.forward();
@@ -235,7 +238,13 @@ class _FavoriteScreenState extends State<FavoriteScreen>
           const SizedBox(height: 24),
           ElevatedButton.icon(
             icon: const Icon(Icons.search),
-            label:  Text('Tìm phim ngay',style: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white,fontWeight: FontWeight.w700),),
+            label: Text(
+              'Tìm phim ngay',
+              style: GoogleFonts.aBeeZee(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF3F54D1),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -266,20 +275,31 @@ class _FavoriteScreenState extends State<FavoriteScreen>
       ),
       color: Colors.grey[900],
       child: InkWell(
-        onTap: () => Navigator.pushNamed(
-          context,
-          '/movie_detail',
-          arguments: {
-            'movie': movie,
-            'isFavorite': true,
-            'fromFavoriteScreen': true
-          },
-        ),
+        onTap: () async {
+          final result = await Navigator.pushNamed(
+            context,
+            '/movie_detail',
+            arguments: {
+              'movie': movie,
+              'isFavorite': true,
+              'fromFavoriteScreen': true,
+            },
+          );
+          if (result != null && result is bool && !result) {
+            // Nếu trạng thái trả về là false, xóa phim khỏi danh sách
+            if (mounted) {
+              setState(() {
+                favoriteMovies.removeWhere((m) => m.id == movie.id);
+                isPlayingList =
+                    List.generate(favoriteMovies.length, (_) => false);
+              });
+            }
+          }
+        },
         borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Movie Poster with Gradient Overlay
             ClipRRect(
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(16)),
@@ -304,7 +324,6 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                       ),
                     ),
                   ),
-                  // Year badge
                   if (movie.year.isNotEmpty)
                     Positioned(
                       top: 12,
@@ -315,7 +334,8 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                         decoration: BoxDecoration(
                           color: Colors.black.withOpacity(0.7),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Color(0xFF3F54D1), width: 1.5),
+                          border:
+                              Border.all(color: Color(0xFF3F54D1), width: 1.5),
                         ),
                         child: Text(
                           movie.year,
@@ -327,7 +347,6 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                         ),
                       ),
                     ),
-                  // Title positioned at bottom of poster
                   Positioned(
                     bottom: 12,
                     left: 12,
@@ -353,14 +372,11 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                 ],
               ),
             ),
-
-            // Movie Info and Actions
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Genres
                   if (movie.genres.isNotEmpty)
                     Wrap(
                       spacing: 6,
@@ -370,10 +386,7 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                           .map((genre) => _buildGenreChip(genre))
                           .toList(),
                     ),
-
                   const SizedBox(height: 12),
-
-                  // Description
                   if (movie.description.isNotEmpty)
                     Text(
                       movie.description,
@@ -384,14 +397,10 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-
                   const SizedBox(height: 16),
-
-                  // Action buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Play button
                       Expanded(
                         child: ElevatedButton.icon(
                           icon:
@@ -405,23 +414,30 @@ class _FavoriteScreenState extends State<FavoriteScreen>
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () {
-                            Navigator.pushNamed(
+                          onPressed: () async {
+                            final result = await Navigator.pushNamed(
                               context,
                               '/movie_detail',
                               arguments: {
                                 'movie': movie,
                                 'isFavorite': true,
-                                'fromFavoriteScreen': true
+                                'fromFavoriteScreen': true,
                               },
                             );
+                            if (result != null && result is bool && !result) {
+                              if (mounted) {
+                                setState(() {
+                                  favoriteMovies
+                                      .removeWhere((m) => m.id == movie.id);
+                                  isPlayingList = List.generate(
+                                      favoriteMovies.length, (_) => false);
+                                });
+                              }
+                            }
                           },
                         ),
                       ),
-
                       const SizedBox(width: 12),
-
-                      // Remove button
                       IconButton(
                         icon: const Icon(Icons.delete_outline, size: 28),
                         color: Colors.white,
