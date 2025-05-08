@@ -895,6 +895,23 @@ class MovieApiService {
     }
   }
 
+  //
+  Future<List<Map<String, dynamic>>> getAllYears() async {
+    // Tạo danh sách tĩnh từ 2024 trở về trước (10 năm gần nhất)
+    final currentYear = DateTime.now().year;
+    List<Map<String, dynamic>> years = [];
+
+    for (int year = currentYear; year >= currentYear - 9; year--) {
+      years.add({
+        'name': year.toString(),
+        'slug': year.toString(), // Sử dụng năm làm slug
+      });
+    }
+
+    print('Đã tạo danh sách ${years.length} năm: $years');
+    return years;
+  }
+
   // Phương thức lấy phim theo quốc gia từ API
   Future<List<MovieModel>> getMoviesByCountryFromApi(String slug,
       {int page = 1}) async {
@@ -979,6 +996,86 @@ class MovieApiService {
       }
     } catch (e) {
       print('Lỗi khi tải phim theo quốc gia $slug: $e');
+      return [];
+    }
+  }
+
+  Future<List<MovieModel>> getMoviesByYearFromApi(String year,
+      {int page = 1}) async {
+    try {
+      final url = Uri.parse(
+          '$baseUrl/v1/api/nam/$year?page=$page&sort_field=_id&sort_type=asc&sort_lang=vietsub&limit=10');
+
+      print('Gọi API lấy phim theo năm: $url');
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == "success" &&
+            data['data'] != null &&
+            data['data']['items'] != null) {
+          List<MovieModel> movies = [];
+
+          for (var item in data['data']['items']) {
+            String imageUrl = '';
+            if (item['poster_url'] != null && item['poster_url'].isNotEmpty) {
+              if (item['poster_url'].startsWith('http')) {
+                imageUrl = item['poster_url'];
+              } else {
+                String cdnUrl = data['data']['APP_DOMAIN_CDN_IMAGE'] ??
+                    'https://phimimg.com';
+                imageUrl = '$cdnUrl/${item['poster_url']}';
+              }
+            }
+
+            List<String> genreNames = [];
+            if (item['category'] != null) {
+              for (var genre in item['category']) {
+                genreNames.add(genre['name'] ?? '');
+              }
+            }
+
+            List<String> countries = [];
+            if (item['country'] != null) {
+              for (var country in item['country']) {
+                countries.add(country['name'] ?? '');
+              }
+            }
+
+            movies.add(MovieModel(
+              id: item['_id'] ?? '',
+              title: item['name'] ?? 'Không có tiêu đề',
+              imageUrl: imageUrl,
+              description: item['origin_name'] ?? '',
+              category: 'Năm',
+              genres: genreNames,
+              year: item['year'] != null ? item['year'].toString() : year,
+              isFavorite: false,
+              extraInfo: {
+                'slug': item['slug'] ?? '',
+                'countries': countries,
+                'episode_current': item['episode_current'] ?? 'Full',
+                'quality': item['quality'] ?? 'HD',
+                'lang': item['lang'] ?? 'Vietsub',
+              },
+            ));
+          }
+
+          print('Đã tải ${movies.length} phim từ năm $year');
+          return movies;
+        } else {
+          print(
+              'API trả về không thành công: ${data['msg'] ?? "Không có dữ liệu"}');
+          return [];
+        }
+      } else {
+        print('Lỗi khi gọi API năm: ${response.statusCode} - ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Lỗi khi tải phim theo năm $year: $e');
       return [];
     }
   }

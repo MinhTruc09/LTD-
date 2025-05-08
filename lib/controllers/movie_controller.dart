@@ -7,34 +7,37 @@ class MovieController {
       FirebaseFirestore.instance.collection('movies');
   final MovieApiService _apiService = MovieApiService();
 
-  // Lấy tất cả phim từ API
   Future<List<MovieModel>> getAllMoviesFromApi({int page = 1}) async {
     return await _apiService.getRecentMovies(page: page);
   }
 
-  // Lấy danh sách thể loại từ API
   Future<List<Map<String, dynamic>>> getAllGenres() async {
     return await _apiService.getGenres();
   }
 
-  // Lấy danh sách quốc gia từ API
   Future<List<Map<String, dynamic>>> getAllCountries() async {
     return await _apiService.getAllCountries();
   }
 
-  // Lấy phim theo thể loại từ API
+  Future<List<Map<String, dynamic>>> getAllYears() async {
+    return await _apiService.getAllYears();
+  }
+
   Future<List<MovieModel>> getMoviesByGenreFromApi(String slug,
       {int page = 1}) async {
     return await _apiService.getMoviesByGenre(slug, page: page);
   }
 
-  // Lấy phim theo quốc gia từ API
   Future<List<MovieModel>> getMoviesByCountryFromApi(String slug,
       {int page = 1}) async {
     return await _apiService.getMoviesByCountryFromApi(slug, page: page);
   }
 
-  // Lấy tất cả phim từ Firebase
+  Future<List<MovieModel>> getMoviesByYearFromApi(String year,
+      {int page = 1, required String category, required String country}) async {
+    return await _apiService.getMoviesByYearFromApi(year, page: page);
+  }
+
   Future<List<MovieModel>> getAllMovies() async {
     final querySnapshot = await _moviesCollection.get();
     return querySnapshot.docs.map((doc) {
@@ -42,7 +45,6 @@ class MovieController {
     }).toList();
   }
 
-  // Lấy phim theo thể loại từ Firebase
   Future<List<MovieModel>> getMoviesByCategory(String category) async {
     final querySnapshot =
         await _moviesCollection.where('category', isEqualTo: category).get();
@@ -51,7 +53,6 @@ class MovieController {
     }).toList();
   }
 
-  // Lấy phim theo quốc gia từ Firebase
   Future<List<MovieModel>> getMoviesByCountry(String country) async {
     final querySnapshot = await _moviesCollection
         .where('extraInfo.countries', arrayContains: country)
@@ -61,7 +62,6 @@ class MovieController {
     }).toList();
   }
 
-  // Lấy phim theo id
   Future<MovieModel?> getMovieById(String id) async {
     final docSnapshot = await _moviesCollection.doc(id).get();
     if (docSnapshot.exists) {
@@ -71,22 +71,18 @@ class MovieController {
     return null;
   }
 
-  // Thêm phim mới
   Future<void> addMovie(MovieModel movie) async {
     await _moviesCollection.add(movie.toMap());
   }
 
-  // Cập nhật phim
   Future<void> updateMovie(MovieModel movie) async {
     await _moviesCollection.doc(movie.id).update(movie.toMap());
   }
 
-  // Xóa phim
   Future<void> deleteMovie(String id) async {
     await _moviesCollection.doc(id).delete();
   }
 
-  // Tìm kiếm phim theo tên
   Future<List<MovieModel>> searchMovies(String query) async {
     final querySnapshot = await _moviesCollection.get();
     final allMovies = querySnapshot.docs.map((doc) {
@@ -98,7 +94,6 @@ class MovieController {
     }).toList();
   }
 
-  // Dữ liệu mẫu
   List<MovieModel> getMockMovies() {
     return [
       MovieModel(

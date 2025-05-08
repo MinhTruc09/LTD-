@@ -11,7 +11,7 @@ import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 
 class MovieDetailScreen extends StatefulWidget {
-  const MovieDetailScreen({Key? key}) : super(key: key);
+  const MovieDetailScreen({super.key});
 
   @override
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();

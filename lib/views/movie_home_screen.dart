@@ -10,6 +10,7 @@ import 'package:movieom_app/widgets/genre_grid.dart';
 import 'package:movieom_app/widgets/movie_category_section.dart';
 import 'package:movieom_app/widgets/movieom_logo.dart';
 import 'package:movieom_app/widgets/country_grid.dart';
+import 'package:movieom_app/widgets/year_grid.dart';
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -24,24 +25,22 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   List<MovieModel> _apiMovies = [];
   List<Map<String, dynamic>> _genres = [];
   List<Map<String, dynamic>> _countries = [];
+  List<Map<String, dynamic>> _years = [];
   List<MovieModel> _genreMovies = [];
   List<MovieModel> _countryMovies = [];
-
+  List<MovieModel> _yearMovies = [];
   Map<String, List<MovieModel>> _genreMoviesMap = {};
   Map<String, bool> _genreLoadingMap = {};
 
   bool _isLoading = true;
   bool _isLoadingGenreMovies = false;
   bool _isLoadingCountryMovies = false;
+  bool _isLoadingYearMovies = false;
   String _selectedCategory = 'Tất cả';
-  final List<String> _categories = [
-    'Tất cả',
-    'Xu hướng',
-    'Quốc gia',
-    'Thể loại'
-  ];
+  final List<String> _categories = ['Tất cả', 'Năm', 'Quốc gia', 'Thể loại'];
   String _selectedGenreName = '';
   String _selectedCountryName = '';
+  String _selectedYearName = '';
 
   final int _maxGenresOnHome = 5;
   final List<String> _popularGenreSlugs = [
@@ -58,6 +57,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     _loadMovies();
     _loadGenres();
     _loadCountries();
+    _loadYears();
   }
 
   Future<void> _loadMovies() async {
@@ -108,6 +108,19 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
       }
     } catch (e) {
       print('Lỗi khi tải quốc gia: $e');
+    }
+  }
+
+  Future<void> _loadYears() async {
+    try {
+      final years = await _movieController.getAllYears();
+      if (mounted) {
+        setState(() {
+          _years = years;
+        });
+      }
+    } catch (e) {
+      print('Lỗi khi tải danh sách năm: $e');
     }
   }
 
@@ -212,6 +225,34 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     }
   }
 
+  Future<void> _loadMoviesByYear(String year, String yearName,
+      {int page = 1, String category = '', String country = ''}) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingYearMovies = true;
+      _selectedYearName = yearName;
+    });
+
+    try {
+      final movies = await _movieController.getMoviesByYearFromApi(year,
+          page: page, category: category, country: country);
+      if (mounted) {
+        setState(() {
+          _yearMovies = movies;
+          _isLoadingYearMovies = false;
+        });
+      }
+    } catch (e) {
+      print('Lỗi khi tải phim theo năm: $e');
+      if (mounted) {
+        setState(() {
+          _yearMovies = [];
+          _isLoadingYearMovies = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,11 +278,15 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               if (!mounted) return;
               setState(() {
                 _selectedCategory = category;
-                if (category != 'Thể loại' && category != 'Quốc gia') {
+                if (category != 'Thể loại' &&
+                    category != 'Quốc gia' &&
+                    category != 'Năm') {
                   _selectedGenreName = '';
                   _genreMovies = [];
                   _selectedCountryName = '';
                   _countryMovies = [];
+                  _selectedYearName = '';
+                  _yearMovies = [];
                 }
               });
             },
@@ -268,6 +313,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                         _buildGenreContent()
                       else if (_selectedCategory == 'Quốc gia')
                         _buildCountryContent()
+                      else if (_selectedCategory == 'Năm')
+                        _buildYearContent()
                       else
                         _buildMovieContent(),
                     ],
@@ -407,6 +454,87 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               padding: const EdgeInsets.all(20.0),
               child: Text(
                 'Không tìm thấy phim nào thuộc quốc gia này',
+                style: GoogleFonts.aBeeZee(
+                  color: Colors.white70,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+
+  Widget _buildYearContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_years.isNotEmpty)
+          YearGrid(
+            years: _years,
+            onYearSelected: (year, name) {
+              _loadMoviesByYear(year, name);
+            },
+          )
+        else
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(
+              child: Text(
+                'Không thể tải danh sách năm phát hành',
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+            ),
+          ),
+        const SizedBox(height: 16),
+        if (_selectedYearName.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 8.0, right: 16.0),
+            child: Text(
+              'Phim năm: $_selectedYearName',
+              style: GoogleFonts.aBeeZee(
+                color: Colors.white,
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        if (_isLoadingYearMovies)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+              ),
+            ),
+          )
+        else if (_yearMovies.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 0.7,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              padding: const EdgeInsets.all(16),
+              itemCount: _yearMovies.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                return _buildGenreMovieItem(_yearMovies[index]);
+              },
+            ),
+          )
+        else if (_selectedYearName.isNotEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                'Không tìm thấy phim nào trong năm này',
                 style: GoogleFonts.aBeeZee(
                   color: Colors.white70,
                   fontSize: 14,
@@ -577,31 +705,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             child: Divider(
               color: Colors.grey[800],
               thickness: 1.0,
-            ),
-          ),
-        if (_apiMovies.length > 1)
-          MovieCategorySection(
-            title: 'Phim Mới Cập Nhật',
-            movies: _apiMovies.skip(1).take(10).toList(),
-            onViewAll: () {
-              if (mounted) {
-                Navigator.pushNamed(
-                  context,
-                  '/category_movies',
-                  arguments: {
-                    'category': 'Phim Mới',
-                    'movies': _apiMovies,
-                  },
-                );
-              }
-            },
-          ),
-        if (_apiMovies.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Divider(
-              color: Colors.white,
-              thickness: 2.0,
             ),
           ),
         ..._buildGenreMovieSections(),
