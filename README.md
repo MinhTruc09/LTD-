@@ -50,7 +50,7 @@ Movieom là ứng dụng xem phim trực tuyến với giao diện thân thiện
 ### Các bước cài đặt
 1. Clone dự án:
    ```bash
-   git clone <repository_url>
+   git clone [<repository_url>](https://github.com/MinhTruc09/LTD-.git)
    ```
 
 2. Cài đặt dependencies:
@@ -62,10 +62,8 @@ Movieom là ứng dụng xem phim trực tuyến với giao diện thân thiện
    ```bash
    flutter run
    ```
-
 ## Nguồn dữ liệu phim
-
-Ứng dụng sử dụng phimapi.com làm nguồn dữ liệu chính, cung cấp:
+Ứng dụng sử dụng [phimapi.com](https://kkphim.com/tai-lieu-api) làm nguồn dữ liệu chính, cung cấp:
 - Thông tin phim
 - Poster và hình ảnh
 - Đường dẫn xem phim
