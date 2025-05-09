@@ -24,14 +24,14 @@ class CustomAlertDialog extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.aBeeZee(
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
       ),
       content: Text(
         content,
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.aBeeZee(
           color: Colors.white,
         ),
       ),
@@ -45,7 +45,7 @@ class CustomAlertDialog extends StatelessWidget {
           },
           child: Text(
             actionText,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.aBeeZee(
               color: const Color(0xFF3F54D1),
               fontWeight: FontWeight.bold,
             ),

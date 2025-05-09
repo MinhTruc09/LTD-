@@ -71,7 +71,7 @@ class _DockingBarState extends State<DockingBar> {
                     ),
                     child: Icon(
                       icons[i],
-                      size: 24,
+                      size: 30,
                       color: i == widget.activeIndex ? Color(0xFF3F54D1) : Colors.white,
                     ),
                   ),

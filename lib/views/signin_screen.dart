@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/widgets/custom_text_field.dart';
@@ -7,17 +6,17 @@ import 'package:movieom_app/widgets/gradient_button.dart';
 import 'package:movieom_app/widgets/header_section.dart';
 import 'package:movieom_app/widgets/custom_alert_dialog.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignInScreen extends StatefulWidget {
   final VoidCallback showRegisterPage;
-  const SignInScreen({super.key, required this.showRegisterPage});
+  const SignInScreen({Key? key, required this.showRegisterPage}) : super(key: key);
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen>
-    with SingleTickerProviderStateMixin {
+class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -60,7 +59,7 @@ class _SignInScreenState extends State<SignInScreen>
     super.dispose();
   }
 
-  Future signIn() async {
+  Future<void> signIn() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
         _isLoading = true;
@@ -77,19 +76,17 @@ class _SignInScreenState extends State<SignInScreen>
         Navigator.pushNamedAndRemoveUntil(
           context,
           '/mainscreen',
-          (route) => false,
+              (route) => false,
         );
       } on FirebaseAuthException catch (e) {
         if (!mounted) return;
         showDialog(
           context: context,
-          builder: (context) {
-            return CustomAlertDialog(
-              title: "Error",
-              content: e.message ?? "An error occurred",
-              actionText: "Oke",
-            );
-          },
+          builder: (context) => CustomAlertDialog(
+            title: "Lỗi đăng nhập",
+            content: e.message ?? "Xin lỗi, Hiện tại không thể đăng nhập",
+            actionText: "Đồng ý !",
+          ),
         );
       } finally {
         if (mounted) {
@@ -104,12 +101,16 @@ class _SignInScreenState extends State<SignInScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
         ),
       ),
+      extendBodyBehindAppBar: true,
       body: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
@@ -119,138 +120,116 @@ class _SignInScreenState extends State<SignInScreen>
             colors: const [Color(0xFF3F54D1), Colors.black],
             child: SafeArea(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Header Section
+                      const SizedBox(height: 30),
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: HeaderSection(
-                          icon: Image.asset('assets/images/userlogo.png',
-                              height: 100),
-                          title: "Ready to watch something",
-                          subtitle: "Please sign in",
+                          icon: Image.asset('assets/images/userlogo.png', height: 120),
+                          title: "Đem lại những bộ phim chất lượng",
+                          subtitle: "Vui lòng đăng nhập tài khoản",
                         ),
                       ),
-
-                      // Input Fields Container
+                      const SizedBox(height: 30),
                       FadeTransition(
                         opacity: _fadeAnimation,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.white,
-                                  blurRadius: 15,
-                                  offset: Offset(5, 5),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                CustomTextField(
-                                  controller: _emailController,
-                                  hintText: "Email...",
-                                  icon: Icons.email_rounded,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your email';
-                                    }
-                                    final emailRegex =
-                                        RegExp(r'^[^@]+@[^@]+\.[^@]+$');
-                                    if (!emailRegex.hasMatch(value)) {
-                                      return 'Please enter a valid email';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                _buildDivider(),
-                                CustomTextField(
-                                  controller: _passwordController,
-                                  hintText: "Password...",
-                                  icon: Icons.lock,
-                                  obscureText: true,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter your password';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ],
-                            ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.white,
+                                blurRadius: 10,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Forgot Password
-                      FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                          child: Column(
                             children: [
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.pushNamed(
-                                      context, '/forgot_password');
+                              CustomTextField(
+                                controller: _emailController,
+                                hintText: "Email...",
+                                icon: Icons.email_rounded,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Vui lòng nhập email của bạn';
+                                  }
+                                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+                                  if (!emailRegex.hasMatch(value)) {
+                                    return 'Vui lòng nhập email hợp lệ!';
+                                  }
+                                  return null;
                                 },
-                                child: Text(
-                                  "Forgot Password?",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
+                              ),
+                              _buildDivider(),
+                              CustomTextField(
+                                controller: _passwordController,
+                                hintText: "Mật khẩu...",
+                                icon: Icons.lock,
+                                obscureText: true,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Vui lòng nhập mật khẩu của bạn!';
+                                  }
+                                  return null;
+                                },
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 25),
-
-                      // Sign In Button
+                      const SizedBox(height: 15),
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(context, '/forgot_password');
+                            },
+                            child: Text(
+                              "Quên mật khẩu?",
+                              style: GoogleFonts.aBeeZee(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
                       ScaleTransition(
                         scale: _scaleAnimation,
                         child: _isLoading
                             ? const CircularProgressIndicator(
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                              )
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        )
                             : GradientButton(
-                                text: "Sign In",
-                                onTap: signIn,
-                              ),
+                          text: "Đăng nhập",
+                          onTap: signIn,
+                        ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Register Link
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Don't have an account? ",
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                              ),
+                              "Chưa có tài khoản? ",
+                              style: GoogleFonts.aBeeZee(color: Colors.white),
                             ),
                             GestureDetector(
-                              onTap: widget
-                                  .showRegisterPage, // Gọi callback trực tiếp
+                              onTap: widget.showRegisterPage,
                               child: Text(
-                                "Register",
-                                style: GoogleFonts.poppins(
+                                "Đăng ký",
+                                style: GoogleFonts.aBeeZee(
                                   color: const Color(0xFF3F54D1),
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
@@ -260,7 +239,7 @@ class _SignInScreenState extends State<SignInScreen>
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -274,7 +253,7 @@ class _SignInScreenState extends State<SignInScreen>
 
   Widget _buildDivider() {
     return const Divider(
-      height: 2,
+      height: 3,
       color: Colors.white,
     );
   }

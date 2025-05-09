@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Text(
                     "Signed in successfully as: ${user.email}",
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.aBeeZee(
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.w500,

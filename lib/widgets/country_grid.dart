@@ -1,50 +1,67 @@
+// lib/widgets/country_grid.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class GenreGrid extends StatefulWidget {
-  final List<Map<String, dynamic>> genres;
-  final Function(String, String) onGenreSelected;
+// Danh sách màu sắc đa dạng cho các nút quốc gia
+const List<Color> _countryColors = [
+  Color(0xFF3F54D1), // Xanh dương
+  Color(0xFF8C52FF), // Tím
+  Color(0xFF007BFF), // Xanh dương nhạt
+  Color(0xFF00C2A8), // Xanh ngọc
+  Color(0xFFE91E63), // Hồng
+  Color(0xFFFF5722), // Cam
+  Color(0xFF673AB7), // Tím đậm
+  Color(0xFF2196F3), // Xanh dương nhạt
+  Color(0xFF4CAF50), // Xanh lá
+  Color(0xFFFF9800), // Cam nhạt
+  Color(0xFF795548), // Nâu
+  Color(0xFF607D8B), // Xanh đen
+];
 
-  const GenreGrid({
+class CountryGrid extends StatefulWidget {
+  final List<Map<String, dynamic>> countries;
+  final Function(String, String) onCountrySelected;
+
+  const CountryGrid({
     super.key,
-    required this.genres,
-    required this.onGenreSelected,
+    required this.countries,
+    required this.onCountrySelected,
   });
 
   @override
-  State<GenreGrid> createState() => _GenreGridState();
+  State<CountryGrid> createState() => _CountryGridState();
 }
 
-class _GenreGridState extends State<GenreGrid> {
-  // Ban đầu hiển thị tất cả thể loại, nhưng chia thành nhiều trang
+class _CountryGridState extends State<CountryGrid> {
+  // Ban đầu hiển thị trang đầu tiên
   int _currentPage = 0;
-  // Số lượng thể loại trên mỗi trang
+  // Số lượng quốc gia trên mỗi trang
   final int _itemsPerPage = 12;
 
-  // Lấy danh sách thể loại cho trang hiện tại
-  List<Map<String, dynamic>> get _currentPageGenres {
+  // Lấy danh sách quốc gia cho trang hiện tại
+  List<Map<String, dynamic>> get _currentPageCountries {
     final start = _currentPage * _itemsPerPage;
     final end = start + _itemsPerPage;
 
-    if (start >= widget.genres.length) {
+    if (start >= widget.countries.length) {
       return [];
     }
 
-    if (end > widget.genres.length) {
-      return widget.genres.sublist(start);
+    if (end > widget.countries.length) {
+      return widget.countries.sublist(start);
     }
 
-    return widget.genres.sublist(start, end);
+    return widget.countries.sublist(start, end);
   }
 
   // Kiểm tra xem có trang tiếp theo không
   bool get _hasNextPage {
-    return (_currentPage + 1) * _itemsPerPage < widget.genres.length;
+    return (_currentPage + 1) * _itemsPerPage < widget.countries.length;
   }
 
   // Số trang tổng cộng
   int get _totalPages {
-    return (widget.genres.length / _itemsPerPage).ceil();
+    return (widget.countries.length / _itemsPerPage).ceil();
   }
 
   // Chuyển đến trang tiếp theo
@@ -56,8 +73,26 @@ class _GenreGridState extends State<GenreGrid> {
     }
   }
 
-  // Hiển thị tất cả thể loại
-  void _loadAllGenres() {
+  // Chuyển đến trang trước
+  void _loadPreviousPage() {
+    if (_currentPage > 0) {
+      setState(() {
+        _currentPage--;
+      });
+    }
+  }
+
+  // Chuyển về trang đầu
+  void _goToFirstPage() {
+    if (_currentPage > 0) {
+      setState(() {
+        _currentPage = 0;
+      });
+    }
+  }
+
+  // Hiển thị tất cả quốc gia
+  void _loadAllCountries() {
     setState(() {
       _currentPage = _totalPages - 1;
     });
@@ -65,10 +100,10 @@ class _GenreGridState extends State<GenreGrid> {
 
   @override
   Widget build(BuildContext context) {
-    // Tính toán tổng số thể loại đã hiển thị
+    // Tính toán tổng số quốc gia đã hiển thị
     final totalDisplayed =
-        (_currentPage + 1) * _itemsPerPage > widget.genres.length
-            ? widget.genres.length
+        (_currentPage + 1) * _itemsPerPage > widget.countries.length
+            ? widget.countries.length
             : (_currentPage + 1) * _itemsPerPage;
 
     return Column(
@@ -81,7 +116,7 @@ class _GenreGridState extends State<GenreGrid> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Thể loại (${totalDisplayed}/${widget.genres.length})',
+                'QUỐC GIA (${totalDisplayed}/${widget.countries.length})',
                 style: GoogleFonts.aBeeZee(
                   color: Colors.white,
                   fontSize: 17,
@@ -90,11 +125,7 @@ class _GenreGridState extends State<GenreGrid> {
               ),
               if (_currentPage > 0)
                 TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentPage = 0;
-                    });
-                  },
+                  onPressed: _goToFirstPage,
                   child: Text(
                     'Trang đầu',
                     style: GoogleFonts.aBeeZee(
@@ -107,7 +138,7 @@ class _GenreGridState extends State<GenreGrid> {
           ),
         ),
 
-        // Hiển thị các thể loại cho trang hiện tại
+        // Hiển thị các quốc gia cho trang hiện tại
         GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
@@ -116,17 +147,17 @@ class _GenreGridState extends State<GenreGrid> {
             childAspectRatio: 2.5,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          itemCount: _currentPageGenres.length,
+          itemCount: _currentPageCountries.length,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
-            final genre = _currentPageGenres[index];
-            return _buildGenreItem(genre);
+            final country = _currentPageCountries[index];
+            return _buildCountryItem(country);
           },
         ),
 
         // Hiển thị điều hướng trang
-        if (widget.genres.length > _itemsPerPage)
+        if (widget.countries.length > _itemsPerPage)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: Row(
@@ -135,11 +166,7 @@ class _GenreGridState extends State<GenreGrid> {
                 // Nút xem trang trước
                 if (_currentPage > 0)
                   ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _currentPage--;
-                      });
-                    },
+                    onPressed: _loadPreviousPage,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey[800],
                       foregroundColor: Colors.white,
@@ -182,12 +209,12 @@ class _GenreGridState extends State<GenreGrid> {
           ),
 
         // Nút "Hiển thị tất cả" chỉ xuất hiện khi chưa hiển thị hết
-        if (totalDisplayed < widget.genres.length)
+        if (totalDisplayed < widget.countries.length)
           Center(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: ElevatedButton(
-                onPressed: _loadAllGenres,
+                onPressed: _loadAllCountries,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3F54D1),
                   foregroundColor: Colors.white,
@@ -198,7 +225,7 @@ class _GenreGridState extends State<GenreGrid> {
                   ),
                 ),
                 child: Text(
-                  'Hiển thị tất cả thể loại',
+                  'Hiển thị tất cả quốc gia',
                   style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
                 ),
               ),
@@ -208,28 +235,13 @@ class _GenreGridState extends State<GenreGrid> {
     );
   }
 
-  Widget _buildGenreItem(Map<String, dynamic> genre) {
-    final colors = [
-      const Color(0xFF3F54D1), // Xanh dương
-      const Color(0xFF8C52FF), // Tím
-      const Color(0xFF007BFF), // Xanh dương nhạt
-      const Color(0xFF00C2A8), // Xanh ngọc
-      const Color(0xFFE91E63), // Hồng
-      const Color(0xFFFF5722), // Cam
-      const Color(0xFF673AB7), // Tím đậm
-      const Color(0xFF2196F3), // Xanh dương nhạt
-      const Color(0xFF4CAF50), // Xanh lá
-      const Color(0xFFFF9800), // Cam nhạt
-      const Color(0xFF795548), // Nâu
-      const Color(0xFF607D8B), // Xanh đen
-    ];
-
-    // Đảm bảo mỗi thể loại có một màu ổn định
-    final colorIndex = genre['name'].hashCode.abs() % colors.length;
-    final color = colors[colorIndex];
+  Widget _buildCountryItem(Map<String, dynamic> country) {
+    // Sử dụng hash code của tên quốc gia để chọn màu ổn định
+    final colorIndex = country['name'].hashCode.abs() % _countryColors.length;
+    final color = _countryColors[colorIndex];
 
     return InkWell(
-      onTap: () => widget.onGenreSelected(genre['slug'], genre['name']),
+      onTap: () => widget.onCountrySelected(country['slug'], country['name']),
       child: Container(
         decoration: BoxDecoration(
           color: color.withOpacity(0.8),
@@ -244,7 +256,7 @@ class _GenreGridState extends State<GenreGrid> {
         ),
         alignment: Alignment.center,
         child: Text(
-          genre['name'],
+          country['name'],
           style: GoogleFonts.aBeeZee(
             color: Colors.white,
             fontWeight: FontWeight.w500,

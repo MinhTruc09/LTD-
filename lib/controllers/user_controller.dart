@@ -5,15 +5,27 @@ class UserController {
   final CollectionReference _usersCollection =
       FirebaseFirestore.instance.collection('users');
 
-  // Thêm thông tin người dùng mới
-  Future<void> addUserDetails(
-      String firstName, String lastName, String email, int age) async {
-    await _usersCollection.add({
-      'first name': firstName,
-      'last name': lastName,
+  // Thêm thông tin người dùng mới với UID làm ID của document
+  Future<void> addUserDetails({
+    required String userId, // Thêm tham số userId
+    required String firstName,
+    required String lastName,
+    required String email,
+    required int age,
+  }) async {
+    // Tạo document trong 'users' với ID là userId
+    final userDocRef = _usersCollection.doc(userId);
+    await userDocRef.set({
+      'first_name': firstName, // Chuẩn hóa tên trường
+      'last_name': lastName,
       'email': email,
       'age': age,
     });
+
+    // Tạo subcollection 'favorites' trống với một document rỗng
+    // Document này sẽ bị xóa khi người dùng thêm phim yêu thích đầu tiên
+    await userDocRef.collection('favorites').doc('placeholder').set(
+        {'created_at': FieldValue.serverTimestamp(), 'is_placeholder': true});
   }
 
   // Lấy thông tin người dùng theo email

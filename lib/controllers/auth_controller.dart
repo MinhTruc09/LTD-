@@ -1,8 +1,33 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 class AuthController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Stream controller để theo dõi thay đổi userId
+  final StreamController<String> _userIdController =
+      StreamController<String>.broadcast();
+
+  // Getter để truy cập streamq
+  Stream<String> get userIdStream => _userIdController.stream;
+
+  AuthController() {
+    _initAuthStateListener();
+  }
+
+  // Khởi tạo listener theo dõi trạng thái xác thực
+  void _initAuthStateListener() {
+    _auth.authStateChanges().listen((User? user) {
+      final userId = user?.uid ?? 'guest';
+      _userIdController.add(userId);
+    });
+  }
+
+  // Giải phóng tài nguyên
+  void dispose() {
+    _userIdController.close();
+  }
 
   // Khóa lưu thông tin đăng nhập
   static const String USER_EMAIL_KEY = 'user_email';
@@ -19,6 +44,11 @@ class AuthController {
     // Lưu thông tin đăng nhập
     await _saveUserSession(credential.user);
 
+    // Thông báo cho stream biết ID đã thay đổi
+    if (credential.user != null) {
+      _userIdController.add(credential.user!.uid);
+    }
+
     return credential;
   }
 
@@ -32,6 +62,11 @@ class AuthController {
     // Lưu thông tin đăng nhập
     await _saveUserSession(credential.user);
 
+    // Thông báo cho stream biết ID đã thay đổi
+    if (credential.user != null) {
+      _userIdController.add(credential.user!.uid);
+    }
+
     return credential;
   }
 
@@ -39,6 +74,9 @@ class AuthController {
   Future<void> signOut() async {
     await _auth.signOut();
     await _clearUserSession();
+
+    // Thông báo cho stream biết đã đăng xuất
+    _userIdController.add('guest');
   }
 
   // Phương thức đặt lại mật khẩu
@@ -49,6 +87,18 @@ class AuthController {
   // Kiểm tra người dùng hiện tại
   User? getCurrentUser() {
     return _auth.currentUser;
+  }
+
+  // Lấy ID người dùng hiện tại
+  Future<String?> getCurrentUserId() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      return user.uid;
+    }
+
+    // Nếu không có người dùng hiện tại, thử lấy từ SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(USER_UID_KEY);
   }
 
   // Lưu thông tin phiên đăng nhập

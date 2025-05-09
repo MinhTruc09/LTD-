@@ -43,7 +43,6 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     final double screenHeight = MediaQuery.of(context).size.height;
-    final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       body: GradientBackground(
@@ -67,9 +66,13 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                     ),
                     const SizedBox(height: 20),
 
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Image.asset('assets/images/logom.png', height: 150),
+                    Center(
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Text(
+                          textAlign: TextAlign.center,
+                          "Xin chào bạn, hãy chọn phương thức đăng nhập",style:GoogleFonts.aBeeZee(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 25),)
+                      ),
                     ),
                     const SizedBox(height: 15),
 
@@ -79,7 +82,7 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                       child: ScaleTransition(
                         scale: _scaleAnimation,
                         child: GradientButton(
-                          text: "Đăng ký tài khoản",
+                          text: "Đăng nhập tài khoản",
                           onTap: () {
                             Navigator.push(
                               context,
@@ -88,7 +91,7 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                               ),
                             );
                           },
-                          fontSize: 18,
+                          fontSize: 19,
                         ),
                       ),
                     ),
@@ -101,11 +104,11 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                       child: ScaleTransition(
                         scale: _scaleAnimation,
                         child: GradientButton(
-                          text: "Đăng nhập bằng Facebook",
+                          text: "Đăng nhập Facebook",
                           onTap: () {
                             // TODO: Facebook login
                           },
-                          fontSize: 18,
+                          fontSize: 19,
                         ),
                       ),
                     ),
@@ -124,14 +127,20 @@ class _MainLoginScreenState extends State<MainLoginScreen> with SingleTickerProv
                             ),
                           );
                         },
-                        child: Text(
-                          "Đăng nhập",
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            color: Colors.white,
-                            decoration: TextDecoration.underline,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Chưa có tài khoản? ",style: GoogleFonts.aBeeZee(fontSize: 19,color: Colors.white,fontWeight: FontWeight.bold),),
+                            Text(
+                              "Đăng ký",
+                              style: GoogleFonts.aBeeZee(
+                                fontSize: 19,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

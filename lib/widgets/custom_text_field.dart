@@ -24,11 +24,11 @@ class CustomTextField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
-        style: GoogleFonts.poppins(color: Colors.white),
+        style: GoogleFonts.aBeeZee(color: Colors.white),
         validator: validator,
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: GoogleFonts.poppins(color: Colors.white,fontWeight: FontWeight.bold),
+          hintStyle: GoogleFonts.aBeeZee(color: Colors.white,fontWeight: FontWeight.bold),
           prefixIcon: Icon(icon, color: Colors.white),
           border: InputBorder.none,
           errorStyle: const TextStyle(color: Colors.white),

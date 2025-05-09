@@ -145,6 +145,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.11"
+  diagonal_decoration:
+    dependency: "direct main"
+    description:
+      name: diagonal_decoration
+      sha256: "4f775403eec6e3a27d82611021be640b682dfda56ce29f4c37cc73c7ade841cf"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.2+3"
   fake_async:
     dependency: transitive
     description:
@@ -758,7 +766,7 @@ packages:
     source: hosted
     version: "6.3.0"
   video_player_web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: video_player_web
       sha256: e8bba2e5d1e159d5048c9a491bb2a7b29c535c612bb7d10c1e21107f5bd365ba
@@ -777,10 +785,10 @@ packages:
     dependency: transitive
     description:
       name: wakelock_plus
-      sha256: b6962cd9fc15e4843b573ba7b53bc46dd8a787594cf9ed5c5182581924656a58
+      sha256: a474e314c3e8fb5adef1f9ae2d247e57467ad557fa7483a2b895bc1b421c5678
       url: "https://pub.dev"
     source: hosted
-    version: "1.3.1"
+    version: "1.3.2"
   wakelock_plus_platform_interface:
     dependency: transitive
     description:
@@ -809,10 +817,10 @@ packages:
     dependency: transitive
     description:
       name: webview_flutter_android
-      sha256: "5c3b6f992d123084903ec091b84f021c413a92a9af49038e4564a1b26c8452cf"
+      sha256: "6b0eae02b7604954b80ee9a29507ac38f5de74b712faa6fee33abc1cdedc1b21"
       url: "https://pub.dev"
     source: hosted
-    version: "4.4.1"
+    version: "4.4.2"
   webview_flutter_platform_interface:
     dependency: transitive
     description:

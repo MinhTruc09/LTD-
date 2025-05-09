@@ -9,12 +9,18 @@ class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
   final String title;
   final bool isEmbed;
+  final String m3u8Url;
+  final List<Map<String, dynamic>> episodes;
+  final int currentEpisodeIndex;
 
   const VideoPlayerScreen({
     Key? key,
     required this.videoUrl,
     required this.title,
     this.isEmbed = false,
+    this.m3u8Url = '',
+    this.episodes = const [],
+    this.currentEpisodeIndex = 0,
   }) : super(key: key);
 
   @override
@@ -30,7 +36,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   String _currentUrl = '';
   bool _initialized = false;
 
-  // Danh sách các tập phim (sẽ được điền từ arguments nếu có)
+  // Danh sách các tập phim
   List<Map<String, String>> _episodes = [];
   // Tập hiện tại
   int _currentEpisodeIndex = 0;
@@ -55,7 +61,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   void _processVideoData() {
     // Xử lý URL từ đầu vào
-    String url = widget.videoUrl;
+    String url = widget.m3u8Url.isNotEmpty ? widget.m3u8Url : widget.videoUrl;
 
     // Lấy thông tin từ arguments nếu có
     final Map<String, dynamic>? args =
@@ -95,6 +101,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           args['m3u8Url'].toString().isNotEmpty) {
         url = args['m3u8Url'].toString();
         print('Sử dụng m3u8Url từ arguments: $url');
+      }
+    } else {
+      // Nếu không có arguments, sử dụng thông tin từ widget props
+      if (widget.episodes.isNotEmpty) {
+        for (var ep in widget.episodes) {
+          if (ep.containsKey('link_m3u8') &&
+              ep.containsKey('name')) {
+            _episodes.add({
+              'url': ep['link_m3u8'].toString(),
+              'name': ep['name'].toString(),
+            });
+          }
+        }
+        print('Đã tải ${_episodes.length} tập phim từ widget props');
+
+        // Thiết lập tập hiện tại
+        if (widget.currentEpisodeIndex >= 0 &&
+            widget.currentEpisodeIndex < _episodes.length) {
+          _currentEpisodeIndex = widget.currentEpisodeIndex;
+          print('Sử dụng tập phim index từ props: $_currentEpisodeIndex');
+        }
       }
     }
 
@@ -183,8 +210,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     try {
       // Thêm các headers phù hợp cho cả HTTP và HLS
       final Map<String, String> headers = {
-        'User-Agent':
-            'Mozilla/5.0 (Android 10; Mobile; rv:88.0) Gecko/88.0 Firefox/88.0',
+        'User-Agent': Platform.isIOS
+            ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
+            : 'Mozilla/5.0 (Android 10; Mobile; rv:88.0) Gecko/88.0 Firefox/88.0',
         'Referer': 'https://phimapi.com/',
         'Origin': 'https://phimapi.com',
         'Connection': 'keep-alive',
@@ -223,7 +251,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       });
 
       // Khởi tạo video player với timeout
-      bool initializeSuccess = false;
       try {
         await _videoPlayerController!.initialize().timeout(
           const Duration(seconds: 15),
@@ -231,7 +258,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             throw TimeoutException('Video khởi tạo quá lâu');
           },
         );
-        initializeSuccess = true;
       } catch (timeoutError) {
         print('Timeout khởi tạo video: $timeoutError');
         setState(() {
@@ -240,10 +266,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               'Thời gian tải video quá lâu. Vui lòng thử lại hoặc kiểm tra kết nối mạng.';
           _isLoading = false;
         });
-        return;
-      }
-
-      if (!initializeSuccess) {
         return;
       }
 
@@ -282,17 +304,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error, color: Colors.red, size: 42),
-                SizedBox(height: 12),
+                const Icon(Icons.error, color: Colors.red, size: 42),
+                const SizedBox(height: 12),
                 Text(
                   'Lỗi phát video: $errorMessage',
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => _initializePlayer(_currentUrl),
-                  child: Text('Thử lại'),
+                  child: const Text('Thử lại'),
                 ),
               ],
             ),
@@ -363,6 +385,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       });
     }
   }
+
+  // Phương thức để chuyển tập phim theo index (giữ lại để tương thích)
 
   @override
   void dispose() {
@@ -690,7 +714,6 @@ class CustomMaterialControls extends MaterialControls {
 
   const CustomMaterialControls({this.movieTitle = 'Movieom'});
 
-  @override
   Widget buildTopBar(BuildContext context, ChewieController controller,
       Animation<double> controlsAnimation) {
     return Positioned(
