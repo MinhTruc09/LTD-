@@ -1,6 +1,8 @@
 // lib/routes/app_routes.dart
 import 'package:flutter/material.dart';
+import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/services/main_screen.dart';
+import 'package:movieom_app/views/category_movies_screen.dart';
 import 'package:movieom_app/views/forgot_password.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
 import 'package:movieom_app/views/movie_detail_screen.dart';
@@ -63,6 +65,18 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       break;
     case '/search':
       page = const SearchScreen();
+      break;
+    case '/category_movies':
+      final args = settings.arguments as Map<String, dynamic>? ?? {};
+      final category = args['category'] as String? ?? 'Phim';
+      final moviesList = args['movies'] ?? [];
+      final genreSlug = args['genre_slug'] as String?;
+      
+      page = CategoryMoviesScreen(
+        category: category,
+        movies: List<MovieModel>.from(moviesList),
+        genreSlug: genreSlug,
+      );
       break;
     default:
       page = const SplashScreen();

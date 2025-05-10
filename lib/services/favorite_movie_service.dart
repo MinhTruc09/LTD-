@@ -124,10 +124,56 @@ class Favoritemovieservice {
     }
   }
 
+  // Dọn dẹp các reference documents cũ
+  Future<void> cleanupOldReferences() async {
+    try {
+      // Lấy tất cả documents trong collection favorites
+      final querySnapshot = await _firestore
+          .collection('users')
+          .doc(_userId)
+          .collection('favorites')
+          .get();
+      
+      int count = 0;
+      for (var doc in querySnapshot.docs) {
+        // Bỏ qua placeholder và favorite_ids_list
+        if (doc.id == 'placeholder' || doc.id == FAVORITE_IDS_DOC) {
+          continue;
+        }
+        
+        try {
+          // Kiểm tra xem có phải reference document không
+          final data = doc.data();
+          if (data != null && 
+              data.containsKey('reference_id') && 
+              data.containsKey('is_reference')) {
+            // Xóa reference document
+            await doc.reference.delete();
+            count++;
+          }
+        } catch (docError) {
+          print('Lỗi xử lý document ${doc.id}: $docError');
+          // Tiếp tục xử lý các document khác
+          continue;
+        }
+      }
+      
+      if (count > 0) {
+        print('Đã xóa $count reference documents cũ');
+      }
+    } catch (e) {
+      print('Lỗi khi dọn dẹp reference documents cũ: $e');
+      // Không ném lỗi, vì đây chỉ là xử lý dọn dẹp
+    }
+  }
+
   Future<void> addFavorite(MovieModel movie) async {
     try {
       // First check if we need to remove placeholder
       await _removeplaceholder();
+      
+      // Dọn dẹp các reference documents cũ
+      await cleanupOldReferences();
 
       // Lấy document ID để lưu phim
       final docId = _getDocumentId(movie);
@@ -144,6 +190,11 @@ class Favoritemovieservice {
 
       // Thêm thông tin slug vào extraInfo nếu chưa có
       Map<String, dynamic> updatedExtraInfo = {...(movie.extraInfo ?? {})};
+      
+      // Thêm slug vào extraInfo nếu có
+      if (slug != null && slug.isNotEmpty) {
+        updatedExtraInfo['slug'] = slug;
+      }
 
       // Add movie to favorites with isFavorite set to true
       final movieToSave = movie.copyWith(
@@ -157,20 +208,8 @@ class Favoritemovieservice {
       // Cập nhật danh sách ID phim yêu thích
       await _addToFavoriteIds(docId, slug);
 
-      // Nếu có slug và khác ID, thêm reference document
-      if (slug != null && slug != docId) {
-        print('Tạo reference với slug: $slug -> ID: $docId');
-        await _firestore
-            .collection('users')
-            .doc(_userId)
-            .collection('favorites')
-            .doc(slug)
-            .set({
-          'reference_id': docId,
-          'is_reference': true,
-          'original_title': movie.title,
-        });
-      }
+      // Không tạo reference document riêng biệt nữa để tránh tạo các tập tin ảo
+      // Thay vào đó, chỉ sử dụng danh sách IDs để theo dõi
     } catch (e) {
       print('Error adding favorite for user $_userId: $e');
       throw Exception('Failed to add favorite: ${e.toString()}');
@@ -193,15 +232,24 @@ class Favoritemovieservice {
       // Cập nhật danh sách ID phim yêu thích
       await _removeFromFavoriteIds(movie.id, slug);
 
-      // Xóa reference document nếu có
+      // Xóa reference document nếu có (giữ lại phần này để dọn dẹp các reference cũ)
       if (slug != null && slug != movie.id) {
-        print('Xóa reference document với slug: $slug');
-        await _firestore
+        print('Kiểm tra và xóa reference document cũ với slug: $slug');
+        final docRef = _firestore
             .collection('users')
             .doc(_userId)
             .collection('favorites')
-            .doc(slug)
-            .delete();
+            .doc(slug);
+            
+        final docSnap = await docRef.get();
+        if (docSnap.exists) {
+          final data = docSnap.data();
+          // Chỉ xóa nếu đúng là reference document
+          if (data != null && data.containsKey('reference_id')) {
+            await docRef.delete();
+            print('Đã xóa reference document với slug: $slug');
+          }
+        }
       }
     } catch (e) {
       print('Error removing favorite for user $_userId: $e');
@@ -220,12 +268,16 @@ class Favoritemovieservice {
 
       for (var doc in docs) {
         final data = doc.data();
-        // Chỉ lấy document không phải là placeholder, không phải reference và không phải danh sách IDs
-        if (doc.id != 'placeholder' &&
-            doc.id != FAVORITE_IDS_DOC &&
-            !(data.extraInfo != null &&
-                data.extraInfo!.containsKey('is_reference') &&
-                data.extraInfo!['is_reference'] == true)) {
+        // Chỉ lấy document không phải là placeholder và không phải danh sách IDs
+        if (doc.id != 'placeholder' && doc.id != FAVORITE_IDS_DOC) {
+          // Bỏ qua reference documents cũ (cho tương thích với dữ liệu cũ)
+          final Map<String, dynamic>? extraInfo = data.extraInfo;
+          if (extraInfo != null && 
+              extraInfo.containsKey('is_reference') && 
+              extraInfo['is_reference'] == true) {
+            continue;
+          }
+          
           // Chỉ thêm nếu ID chưa tồn tại
           if (uniqueIds.add(data.id)) {
             movies.add(data);
@@ -233,7 +285,7 @@ class Favoritemovieservice {
         }
       }
 
-      print('Fetched favorites: ${movies.map((m) => m.toString()).toList()}');
+      print('Đã tìm thấy ${movies.length} phim yêu thích');
       return movies;
     } catch (e) {
       print('Error getting favorites for user $_userId: $e');
@@ -244,16 +296,30 @@ class Favoritemovieservice {
   Stream<List<MovieModel>> streamFavorites() {
     return _getFavoritesCollection().snapshots().map((snapshot) {
       Set<String> uniqueIds = {};
-      return snapshot.docs
-          .where((doc) =>
-              doc.id != 'placeholder' &&
-              doc.id != FAVORITE_IDS_DOC &&
-              !(doc.data().extraInfo != null &&
-                  doc.data().extraInfo!.containsKey('is_reference') &&
-                  doc.data().extraInfo!['is_reference'] == true))
-          .map((doc) => doc.data())
-          .where((movie) => uniqueIds.add(movie.id))
-          .toList();
+      List<MovieModel> movies = [];
+      
+      for (var doc in snapshot.docs) {
+        // Bỏ qua placeholder và favorite_ids_list
+        if (doc.id == 'placeholder' || doc.id == FAVORITE_IDS_DOC) {
+          continue;
+        }
+        
+        final movie = doc.data();
+        
+        // Bỏ qua reference documents cũ (cho tương thích với dữ liệu cũ)
+        if (movie.extraInfo != null && 
+            movie.extraInfo!.containsKey('is_reference') && 
+            movie.extraInfo!['is_reference'] == true) {
+          continue;
+        }
+        
+        // Chỉ thêm nếu ID chưa tồn tại
+        if (uniqueIds.add(movie.id)) {
+          movies.add(movie);
+        }
+      }
+      
+      return movies;
     });
   }
 
@@ -290,7 +356,8 @@ class Favoritemovieservice {
         return true;
       }
 
-      // Nếu không tìm thấy, kiểm tra xem có phải là reference document không
+      // Không cần kiểm tra reference document nữa vì chúng ta không còn tạo chúng
+      // Nhưng vẫn giữ lại đoạn code dưới đây để tương thích với dữ liệu cũ
       final referenceDoc = await _firestore
           .collection('users')
           .doc(_userId)
@@ -302,7 +369,7 @@ class Favoritemovieservice {
         final data = referenceDoc.data();
         if (data != null && data.containsKey('reference_id')) {
           print(
-              'Tìm thấy reference document: $movieId -> ${data['reference_id']}');
+              'Tìm thấy reference document cũ: $movieId -> ${data['reference_id']}');
           return true;
         }
       }
@@ -328,6 +395,29 @@ class Favoritemovieservice {
     } catch (e) {
       print('Error removing placeholder: $e');
       // Không ném lỗi, vì đây chỉ là xử lý dọn dẹp
+    }
+  }
+
+  // Phương thức public để dọn dẹp tất cả các file ảo
+  Future<void> cleanupPhantomFiles() async {
+    try {
+      // Gọi các phương thức dọn dẹp
+      try {
+        await _removeplaceholder();
+      } catch (e) {
+        print('Lỗi khi xóa placeholder: $e');
+      }
+      
+      try {
+        await cleanupOldReferences();
+      } catch (e) {
+        print('Lỗi khi dọn dẹp references: $e');
+      }
+      
+      print('Hoàn tất quá trình dọn dẹp files');
+    } catch (e) {
+      print('Lỗi chung khi dọn dẹp các file ảo: $e');
+      // Không ném lỗi ra ngoài
     }
   }
 }

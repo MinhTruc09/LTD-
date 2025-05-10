@@ -154,7 +154,10 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     for (var genre in genresToLoad) {
       try {
         final slug = genre['slug'];
-        final movies = await _movieController.getMoviesByGenreFromApi(slug);
+        final movies = await _movieController.getMoviesByGenreFromApi(
+          slug,
+          limit: 20
+        );
 
         if (mounted) {
           setState(() {
@@ -207,7 +210,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     });
 
     try {
-      final movies = await _movieController.getMoviesByCountryFromApi(slug);
+      final movies = await _movieController.getMoviesByCountryFromApi(slug, limit: 20);
       if (mounted) {
         setState(() {
           _countryMovies = movies;
@@ -234,8 +237,13 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     });
 
     try {
-      final movies = await _movieController.getMoviesByYearFromApi(year,
-          page: page, category: category, country: country);
+      final movies = await _movieController.getMoviesByYearFromApi(
+        year,
+        page: page,
+        limit: 20,
+        category: category,
+        country: country
+      );
       if (mounted) {
         setState(() {
           _yearMovies = movies;
@@ -411,13 +419,71 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         if (_selectedCountryName.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(left: 16.0, top: 8.0, right: 16.0),
-            child: Text(
-              'Phim quốc gia: $_selectedCountryName',
-              style: GoogleFonts.aBeeZee(
-                color: Colors.white,
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Phim quốc gia: $_selectedCountryName',
+                  style: GoogleFonts.aBeeZee(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_countryMovies.isNotEmpty)
+                  TextButton(
+                    onPressed: () async {
+                      String selectedSlug = '';
+                      for (var country in _countries) {
+                        if (country['name'] == _selectedCountryName) {
+                          selectedSlug = country['slug'] as String;
+                          break;
+                        }
+                      }
+                      
+                      if (selectedSlug.isNotEmpty) {
+                        setState(() {
+                          _isLoadingCountryMovies = true;
+                        });
+                        
+                        try {
+                          final allMovies = await _movieController.getMoviesByCountryFromApi(
+                            selectedSlug,
+                            limit: 64
+                          );
+                          
+                          if (mounted) {
+                            print('Chuyển đến màn hình xem tất cả phim quốc gia: $selectedSlug');
+                            Navigator.pushNamed(
+                              context,
+                              '/category_movies',
+                              arguments: {
+                                'category': 'Phim quốc gia $_selectedCountryName',
+                                'movies': allMovies,
+                                'genre_slug': selectedSlug
+                              },
+                            );
+                          }
+                        } catch (e) {
+                          print('Lỗi khi tải tất cả phim quốc gia $_selectedCountryName: $e');
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isLoadingCountryMovies = false;
+                            });
+                          }
+                        }
+                      }
+                    },
+                    child: Text(
+                      'Xem tất cả',
+                      style: GoogleFonts.aBeeZee(
+                        color: const Color(0xFF3F54D1),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         if (_isLoadingCountryMovies)
@@ -492,13 +558,62 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         if (_selectedYearName.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(left: 16.0, top: 8.0, right: 16.0),
-            child: Text(
-              'Phim năm: $_selectedYearName',
-              style: GoogleFonts.aBeeZee(
-                color: Colors.white,
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Phim năm: $_selectedYearName',
+                  style: GoogleFonts.aBeeZee(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_yearMovies.isNotEmpty)
+                  TextButton(
+                    onPressed: () async {
+                      if (_selectedYearName.isNotEmpty) {
+                        setState(() {
+                          _isLoadingYearMovies = true;
+                        });
+                        
+                        try {
+                          final allMovies = await _movieController.getMoviesByYearFromApi(
+                            _selectedYearName,
+                            limit: 64
+                          );
+                          
+                          if (mounted) {
+                            Navigator.pushNamed(
+                              context,
+                              '/category_movies',
+                              arguments: {
+                                'category': 'Phim năm $_selectedYearName',
+                                'movies': allMovies,
+                                'genre_slug': _selectedYearName
+                              },
+                            );
+                          }
+                        } catch (e) {
+                          print('Lỗi khi tải tất cả phim năm $_selectedYearName: $e');
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isLoadingYearMovies = false;
+                            });
+                          }
+                        }
+                      }
+                    },
+                    child: Text(
+                      'Xem tất cả',
+                      style: GoogleFonts.aBeeZee(
+                        color: const Color(0xFF3F54D1),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         if (_isLoadingYearMovies)
@@ -750,16 +865,38 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         sections.add(MovieCategorySection(
           title: 'Phim $name',
           movies: movies,
-          onViewAll: () {
+          onViewAll: () async {
             if (mounted) {
-              Navigator.pushNamed(
-                context,
-                '/category_movies',
-                arguments: {
-                  'category': name,
-                  'movies': movies,
-                },
-              );
+              setState(() {
+                _isLoadingGenreMovies = true;
+              });
+              
+              try {
+                final allMovies = await _movieController.getMoviesByGenreFromApi(
+                  slug,
+                  limit: 64
+                );
+                
+                if (mounted) {
+                  Navigator.pushNamed(
+                    context,
+                    '/category_movies',
+                    arguments: {
+                      'category': 'Phim $name',
+                      'movies': allMovies,
+                      'genre_slug': slug
+                    },
+                  );
+                }
+              } catch (e) {
+                print('Lỗi khi tải tất cả phim thể loại $name: $e');
+              } finally {
+                if (mounted) {
+                  setState(() {
+                    _isLoadingGenreMovies = false;
+                  });
+                }
+              }
             }
           },
         ));

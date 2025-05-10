@@ -1,12 +1,10 @@
 // lib/views/movie_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/Entity/movie_detail_model.dart';
 import 'package:movieom_app/services/movie_api_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 

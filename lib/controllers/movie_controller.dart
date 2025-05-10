@@ -24,18 +24,18 @@ class MovieController {
   }
 
   Future<List<MovieModel>> getMoviesByGenreFromApi(String slug,
-      {int page = 1}) async {
-    return await _apiService.getMoviesByGenre(slug, page: page);
+      {int page = 1, int limit = 100}) async {
+    return await _apiService.getMoviesByGenre(slug, page: page, limit: limit);
   }
 
   Future<List<MovieModel>> getMoviesByCountryFromApi(String slug,
-      {int page = 1}) async {
-    return await _apiService.getMoviesByCountryFromApi(slug, page: page);
+      {int page = 1, int limit = 100}) async {
+    return await _apiService.getMoviesByCountryFromApi(slug, page: page, limit: limit);
   }
 
   Future<List<MovieModel>> getMoviesByYearFromApi(String year,
-      {int page = 1, required String category, required String country}) async {
-    return await _apiService.getMoviesByYearFromApi(year, page: page);
+      {int page = 1, int limit = 100, String category = '', String country = ''}) async {
+    return await _apiService.getMoviesByYearFromApi(year, page: page, limit: limit);
   }
 
   Future<List<MovieModel>> getAllMovies() async {
