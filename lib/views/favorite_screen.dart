@@ -81,7 +81,12 @@ class _FavoriteScreenState extends State<FavoriteScreen>
       _favoriteService = Favoritemovieservice(userId);
       _isLoading = true;
     });
+    await _cleanupReferences();
     _loadFavorites();
+  }
+
+  Future<void> _cleanupReferences() async {
+    await _favoriteService.cleanupPhantomFiles();
   }
 
   Future<void> _loadFavorites() async {

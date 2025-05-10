@@ -204,14 +204,17 @@ class MovieApiService {
     ];
   }
 
-  Future<List<MovieModel>> getMoviesByGenre(String slug, {int page = 1}) async {
+  Future<List<MovieModel>> getMoviesByGenre(String slug, {int page = 1, int limit = 100}) async {
     try {
-      // Sử dụng URL /v1/api/the-loai/{slug} theo đúng định dạng API
+      // API có giới hạn tối đa 64 items, nên giới hạn limit để tránh lỗi
+      int safeLimit = limit > 64 ? 64 : limit;
+      
+      // Sử dụng URL /v1/api/the-loai/{slug} theo đúng định dạng API và thêm limit
       final response = await http.get(
-        Uri.parse('$baseUrl/v1/api/the-loai/$slug?page=$page'),
+        Uri.parse('$baseUrl/v1/api/the-loai/$slug?page=$page&limit=$safeLimit'),
       );
 
-      print('URL đang gọi: $baseUrl/v1/api/the-loai/$slug?page=$page');
+      print('URL đang gọi: $baseUrl/v1/api/the-loai/$slug?page=$page&limit=$safeLimit');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -914,11 +917,14 @@ class MovieApiService {
 
   // Phương thức lấy phim theo quốc gia từ API
   Future<List<MovieModel>> getMoviesByCountryFromApi(String slug,
-      {int page = 1}) async {
+      {int page = 1, int limit = 100}) async {
     try {
+      // API có giới hạn tối đa 64 items, nên giới hạn limit để tránh lỗi
+      int safeLimit = limit > 64 ? 64 : limit;
+      
       // Xây dựng URL với các tham số mặc định
       final url = Uri.parse(
-          '$baseUrl/v1/api/quoc-gia/$slug?page=$page&sort_field=_id&sort_type=asc&sort_lang=vietsub&limit=10');
+          '$baseUrl/v1/api/quoc-gia/$slug?page=$page&sort_field=_id&sort_type=asc&sort_lang=vietsub&limit=$safeLimit');
 
       print('Gọi API lấy phim theo quốc gia: $url');
 
@@ -1001,10 +1007,13 @@ class MovieApiService {
   }
 
   Future<List<MovieModel>> getMoviesByYearFromApi(String year,
-      {int page = 1}) async {
+      {int page = 1, int limit = 100}) async {
     try {
+      // API có giới hạn tối đa 64 items, nên giới hạn limit để tránh lỗi
+      int safeLimit = limit > 64 ? 64 : limit;
+      
       final url = Uri.parse(
-          '$baseUrl/v1/api/nam/$year?page=$page&sort_field=_id&sort_type=asc&sort_lang=vietsub&limit=10');
+          '$baseUrl/v1/api/nam/$year?page=$page&sort_field=_id&sort_type=asc&sort_lang=vietsub&limit=$safeLimit');
 
       print('Gọi API lấy phim theo năm: $url');
 
