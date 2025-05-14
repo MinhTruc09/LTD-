@@ -4,7 +4,6 @@ import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/controllers/movie_controller.dart';
 import 'package:movieom_app/services/favorite_movie_service.dart';
-import 'package:movieom_app/views/main_login_screen.dart';
 import 'package:movieom_app/widgets/category_filter.dart';
 import 'package:movieom_app/widgets/featured_movie.dart';
 import 'package:movieom_app/widgets/genre_grid.dart';
@@ -257,27 +256,6 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     }
   }
 
-  Future<void> _handleSignOut() async {
-    try {
-      await _authController.signOut();
-      if (!mounted) return;
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MainLoginScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đã xảy ra lỗi khi đăng xuất: ${e.toString()}'),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -345,12 +323,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                 },
                 color: const Color(0xFF3F54D1),
                 child: GestureDetector(
-                  onHorizontalDragEnd: (details) {
-                    if (details.primaryVelocity != null &&
-                        details.primaryVelocity! < 0) {
-                      _handleSignOut();
-                    }
-                  },
+                  // Đã xoá onHorizontalDragEnd để không tự động đăng xuất khi swipe phải
                   child: SafeArea(
                     child: SingleChildScrollView(
                       child: Column(
