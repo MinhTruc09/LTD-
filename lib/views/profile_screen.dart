@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
-import 'package:movieom_app/widgets/profile_containers.dart'; // Import ProfileContainers
+import 'package:movieom_app/widgets/profile_containers.dart';
+import 'package:movieom_app/widgets/skeleton_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthController _authController = AuthController();
   String? _userName;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -22,9 +24,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserInfo() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
     final user = _authController.getCurrentUser();
+    
     setState(() {
       _userName = user?.email;
+      _isLoading = false;
     });
   }
 
@@ -75,79 +83,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
+      body: _isLoading
+          ? SkeletonWidgets.profileScreenSkeleton()
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
 
-              // Ảnh đại diện
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF3F54D1),
-                    width: 2.5,
-                  ),
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    'assets/images/userlogo.png',
-                    fit: BoxFit.cover,
-                  ),
+                    // Ảnh đại diện
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF3F54D1),
+                          width: 2.5,
+                        ),
+                      ),
+                      child: ClipOval(
+                        child: Image.asset(
+                          'assets/images/userlogo.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Email người dùng
+                    Text(
+                      _userName ?? 'Chưa đăng nhập',
+                      style: GoogleFonts.aBeeZee(
+                        fontSize: 20,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3F54D1).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF3F54D1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'Thành viên',
+                        style: GoogleFonts.aBeeZee(
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    // Các container
+                    ProfileContainers(
+                      onSignOut: _signOut, // Truyền hàm đăng xuất
+                    ),
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Email người dùng
-              Text(
-                _userName ?? 'Chưa đăng nhập',
-                style: GoogleFonts.aBeeZee(
-                  fontSize: 20,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3F54D1).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFF3F54D1),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  'Thành viên',
-                  style: GoogleFonts.aBeeZee(
-                    fontSize: 14,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              // Các container
-              ProfileContainers(
-                onSignOut: _signOut, // Truyền hàm đăng xuất
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
