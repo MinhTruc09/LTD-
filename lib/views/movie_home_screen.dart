@@ -417,7 +417,45 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
-                return _buildGenreMovieItem(_genreMovies[index]);
+                final movie = _genreMovies[index];
+                return GestureDetector(
+                  onTap: () async {
+                    bool isFavorite = false;
+                    try {
+                      final userId =
+                          await _authController.getCurrentUserId() ?? 'guest';
+                      if (userId != 'guest') {
+                        final favoriteService = Favoritemovieservice(userId);
+                        isFavorite =
+                            await favoriteService.isMovieFavorite(movie.id);
+                        if (!isFavorite &&
+                            movie.extraInfo != null &&
+                            movie.extraInfo!.containsKey('slug')) {
+                          final slug = movie.extraInfo!['slug'];
+                          if (slug != null &&
+                              slug is String &&
+                              slug.isNotEmpty) {
+                            isFavorite =
+                                await favoriteService.isMovieFavorite(slug);
+                          }
+                        }
+                      }
+                    } catch (e) {
+                      print('Lỗi kiểm tra trạng thái yêu thích: $e');
+                    }
+                    if (mounted) {
+                      Navigator.pushNamed(
+                        context,
+                        '/movie_detail',
+                        arguments: {
+                          'movie': movie,
+                          'isFavorite': isFavorite,
+                        },
+                      );
+                    }
+                  },
+                  child: _buildGenreMovieItem(movie),
+                );
               },
             ),
           )
@@ -854,12 +892,35 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
 
   Widget _buildGenreMovieItem(MovieModel movie) {
     return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/movie_detail',
-          arguments: movie,
-        );
+      onTap: () async {
+        bool isFavorite = false;
+        try {
+          final userId = await _authController.getCurrentUserId() ?? 'guest';
+          if (userId != 'guest') {
+            final favoriteService = Favoritemovieservice(userId);
+            isFavorite = await favoriteService.isMovieFavorite(movie.id);
+            if (!isFavorite &&
+                movie.extraInfo != null &&
+                movie.extraInfo!.containsKey('slug')) {
+              final slug = movie.extraInfo!['slug'];
+              if (slug != null && slug is String && slug.isNotEmpty) {
+                isFavorite = await favoriteService.isMovieFavorite(slug);
+              }
+            }
+          }
+        } catch (e) {
+          print('Lỗi kiểm tra trạng thái yêu thích: $e');
+        }
+        if (mounted) {
+          Navigator.pushNamed(
+            context,
+            '/movie_detail',
+            arguments: {
+              'movie': movie,
+              'isFavorite': isFavorite,
+            },
+          );
+        }
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

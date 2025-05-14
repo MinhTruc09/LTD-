@@ -1021,25 +1021,91 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          TextButton(
-            onPressed: _handleWatchMovie,
-            child: Text(
-              'Xem phim',
-              style: GoogleFonts.aBeeZee(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3F54D1).withOpacity(0.8),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0xFF3F54D1).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(30),
+                onTap: _handleWatchMovie,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.play_circle_fill,
+                          color: Colors.white, size: 26),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Xem phim',
+                        style: GoogleFonts.aBeeZee(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-          TextButton(
-            onPressed: _toggleFavorite,
-            child: Text(
-              _isFavorite ? 'Bỏ yêu thích' : 'Yêu thích',
-              style: GoogleFonts.aBeeZee(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              color: _isFavorite
+                  ? Colors.redAccent.withOpacity(0.85)
+                  : Colors.grey[800],
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                if (_isFavorite)
+                  BoxShadow(
+                    color: Colors.redAccent.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(30),
+                onTap: _toggleFavorite,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isFavorite ? 'Bỏ yêu thích' : 'Yêu thích',
+                        style: GoogleFonts.aBeeZee(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

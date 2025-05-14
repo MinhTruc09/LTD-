@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
@@ -40,6 +41,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   List<Map<String, String>> _episodes = [];
   // Tập hiện tại
   int _currentEpisodeIndex = 0;
+
+  // Thông tin để lưu vị trí xem
+  Duration? _resumePosition;
 
   @override
   void initState() {
@@ -238,6 +242,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
       // Đăng ký listener để theo dõi lỗi
       _videoPlayerController!.addListener(() {
+        if (_videoPlayerController!.value.isPlaying == false &&
+            _videoPlayerController!.value.position > Duration.zero) {
+          _saveResumePosition();
+        }
         if (_videoPlayerController!.value.hasError) {
           print(
               'Lỗi video player: ${_videoPlayerController!.value.errorDescription}');
@@ -258,6 +266,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             throw TimeoutException('Video khởi tạo quá lâu');
           },
         );
+        // Sau khi khởi tạo, thử load resume position
+        await _loadResumePosition();
+        if (_resumePosition != null &&
+            _resumePosition! < _videoPlayerController!.value.duration) {
+          await _videoPlayerController!.seekTo(_resumePosition!);
+        }
       } catch (timeoutError) {
         print('Timeout khởi tạo video: $timeoutError');
         setState(() {
@@ -343,9 +357,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   // Đổi episode bằng URL thay vì index, cho phép xác định lại máy chủ
   void _changeEpisodeByUrl(String url, String name) {
+    _saveResumePosition(); // Lưu vị trí tập cũ
     if (url.isNotEmpty) {
       setState(() {
         _currentUrl = _validateAndProcessUrl(url);
+        _resumePosition = null; // Reset resume cho tập mới
         // Reset trạng thái
         _hasError = false;
         _errorMessage = '';
@@ -386,10 +402,42 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
-  // Phương thức để chuyển tập phim theo index (giữ lại để tương thích)
+  // Tạo key duy nhất cho mỗi phim/tập
+  String _buildResumeKey() {
+    // Ưu tiên slug, nếu không có thì dùng id hoặc url
+    String movieId = '';
+    if (widget.title.isNotEmpty) {
+      movieId = widget.title;
+    } else if (_currentUrl.isNotEmpty) {
+      movieId = _currentUrl;
+    }
+    return 'resume_${movieId}_ep_$_currentEpisodeIndex';
+  }
+
+  // Lưu vị trí xem
+  Future<void> _saveResumePosition() async {
+    if (_videoPlayerController == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final pos = _videoPlayerController!.value.position.inSeconds;
+    final key = _buildResumeKey();
+    await prefs.setInt(key, pos);
+  }
+
+  // Đọc vị trí xem
+  Future<void> _loadResumePosition() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _buildResumeKey();
+    final pos = prefs.getInt(key);
+    if (pos != null && pos > 0) {
+      _resumePosition = Duration(seconds: pos);
+    } else {
+      _resumePosition = null;
+    }
+  }
 
   @override
   void dispose() {
+    _saveResumePosition(); // Lưu vị trí khi thoát
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
