@@ -10,6 +10,7 @@ import 'package:movieom_app/services/movie_api_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
+import 'package:movieom_app/widgets/skeleton_widgets.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -243,27 +244,7 @@ class _SearchScreenState extends State<SearchScreen> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Đang tải dữ liệu phim...',
-                  style: GoogleFonts.aBeeZee(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
+          child: SkeletonWidgets.movieDetailSkeleton(),
         );
       },
     );

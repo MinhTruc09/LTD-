@@ -2,13 +2,17 @@
 import 'package:flutter/material.dart';
 import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/services/main_screen.dart';
+import 'package:movieom_app/views/about_screen.dart';
 import 'package:movieom_app/views/category_movies_screen.dart';
+import 'package:movieom_app/views/contact_screen.dart';
 import 'package:movieom_app/views/forgot_password.dart';
+import 'package:movieom_app/views/help_center_screen.dart';
 import 'package:movieom_app/views/main_login_screen.dart';
 import 'package:movieom_app/views/movie_detail_screen.dart';
 import 'package:movieom_app/views/movie_home_screen.dart';
 import 'package:movieom_app/views/splash_screen.dart';
 import 'package:movieom_app/views/home_screen.dart';
+import 'package:movieom_app/views/terms_screen.dart';
 import 'package:movieom_app/views/video_player_screen.dart';
 
 import '../views/search_screen.dart';
@@ -26,6 +30,10 @@ final Map<String, WidgetBuilder> appRoutes = {
         title: 'Movieom Player',
       ),
   '/search': (context) => const SearchScreen(),
+  '/about': (context) => const AboutScreen(),
+  '/contact': (context) => const ContactScreen(),
+  '/terms': (context) => const TermsScreen(),
+  '/help': (context) => const HelpCenterScreen(),
 };
 
 Route<dynamic> onGenerateRoute(RouteSettings settings) {
@@ -65,6 +73,18 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       break;
     case '/search':
       page = const SearchScreen();
+      break;
+    case '/about':
+      page = const AboutScreen();
+      break;
+    case '/contact':
+      page = const ContactScreen();
+      break;
+    case '/terms':
+      page = const TermsScreen();
+      break;
+    case '/help':
+      page = const HelpCenterScreen();
       break;
     case '/category_movies':
       final args = settings.arguments as Map<String, dynamic>? ?? {};

@@ -7,6 +7,7 @@ import 'package:movieom_app/Entity/movie_detail_model.dart';
 import 'package:movieom_app/services/movie_api_service.dart';
 import 'package:movieom_app/services/favorite_movie_service.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
+import 'package:movieom_app/widgets/skeleton_widgets.dart';
 
 class MovieDetailScreen extends StatefulWidget {
   const MovieDetailScreen({super.key});
@@ -265,11 +266,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           ),
         ),
         body: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-                ),
-              )
+            ? SkeletonWidgets.movieDetailSkeleton()
             : errorMessage != null
                 ? Center(
                     child: Text(
@@ -280,88 +277,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 : _buildMovieDetails(),
         bottomNavigationBar:
             isLoading || errorMessage != null ? null : _buildBottomActionBar(),
-      ),
-    );
-  }
-
-  Widget _buildBottomActionBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.7),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20.0),
-          topRight: Radius.circular(20.0),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            decoration: BoxDecoration(
-              color: _isFavorite
-                  ? Colors.pink.withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: _isCheckingFavorite ? null : _toggleFavorite,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _isCheckingFavorite
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.0,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.pink),
-                              ),
-                            )
-                          : Icon(
-                              _isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: _isFavorite ? Colors.pink : Colors.grey,
-                            ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _isFavorite ? 'Đã yêu thích' : 'Yêu thích',
-                        style: GoogleFonts.aBeeZee(
-                          color: _isFavorite ? Colors.pink : Colors.grey,
-                          fontWeight:
-                              _isFavorite ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF3F54D1),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: _handleWatchMovie,
-            icon: const Icon(Icons.play_arrow),
-            label: Text('Xem phim',
-                style: GoogleFonts.aBeeZee(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }
@@ -444,41 +359,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
           ),
         ),
-        if (movieDetail!.hasTrailer)
-          Positioned(
-            right: 16,
-            top: 16,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.play_arrow, color: Colors.white),
-              label: Text(
-                'Trailer',
-                style: GoogleFonts.aBeeZee(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.8),
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                final trailerUrl = movieDetail!.movie.trailerUrl;
-                if (trailerUrl.isNotEmpty) {
-                  Navigator.pushNamed(
-                    context,
-                    '/video_player',
-                    arguments: {
-                      'videoUrl': trailerUrl,
-                      'title': 'Trailer: ${movieDetail!.movie.name}',
-                      'isEmbed': trailerUrl.contains('embed') ||
-                          trailerUrl.contains('player'),
-                    },
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Không có trailer')),
-                  );
-                }
-              },
-            ),
-          ),
       ],
     );
   }
@@ -1129,6 +1009,40 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               ],
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActionBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.black,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          TextButton(
+            onPressed: _handleWatchMovie,
+            child: Text(
+              'Xem phim',
+              style: GoogleFonts.aBeeZee(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _toggleFavorite,
+            child: Text(
+              _isFavorite ? 'Bỏ yêu thích' : 'Yêu thích',
+              style: GoogleFonts.aBeeZee(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ],
       ),
     );

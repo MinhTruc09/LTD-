@@ -4,6 +4,7 @@ import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/controllers/movie_controller.dart';
 import 'package:movieom_app/services/favorite_movie_service.dart';
+import 'package:movieom_app/views/main_login_screen.dart';
 import 'package:movieom_app/widgets/category_filter.dart';
 import 'package:movieom_app/widgets/featured_movie.dart';
 import 'package:movieom_app/widgets/genre_grid.dart';
@@ -11,6 +12,7 @@ import 'package:movieom_app/widgets/movie_category_section.dart';
 import 'package:movieom_app/widgets/movieom_logo.dart';
 import 'package:movieom_app/widgets/country_grid.dart';
 import 'package:movieom_app/widgets/year_grid.dart';
+import 'package:movieom_app/widgets/skeleton_widgets.dart';
 
 class MovieHomeScreen extends StatefulWidget {
   const MovieHomeScreen({super.key});
@@ -261,6 +263,27 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     }
   }
 
+  Future<void> _handleSignOut() async {
+    try {
+      await _authController.signOut();
+      if (!mounted) return;
+      
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainLoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã xảy ra lỗi khi đăng xuất: ${e.toString()}'),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -302,9 +325,22 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+          ? SafeArea(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    SkeletonWidgets.featuredMovieSkeleton(),
+                    const SizedBox(height: 24),
+                    ...List.generate(
+                      3,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 24.0),
+                        child: SkeletonWidgets.movieCategorySectionSkeleton(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             )
           : RefreshIndicator(
@@ -312,20 +348,27 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                 await _loadMovies();
               },
               color: const Color(0xFF3F54D1),
-              child: SafeArea(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (_selectedCategory == 'Thể loại')
-                        _buildGenreContent()
-                      else if (_selectedCategory == 'Quốc gia')
-                        _buildCountryContent()
-                      else if (_selectedCategory == 'Năm')
-                        _buildYearContent()
-                      else
-                        _buildMovieContent(),
-                    ],
+              child: GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
+                    _handleSignOut();
+                  }
+                },
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (_selectedCategory == 'Thể loại')
+                          _buildGenreContent()
+                        else if (_selectedCategory == 'Quốc gia')
+                          _buildCountryContent()
+                        else if (_selectedCategory == 'Năm')
+                          _buildYearContent()
+                        else
+                          _buildMovieContent(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -337,7 +380,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_genres.isNotEmpty)
+        if (_genres.isEmpty)
+          SkeletonWidgets.gridSkeleton()
+        else if (_genres.isNotEmpty)
           GenreGrid(
             genres: _genres,
             onGenreSelected: (slug, name) {
@@ -358,14 +403,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             ),
           ),
         if (_isLoadingGenreMovies)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-              ),
-            ),
-          )
+          SkeletonWidgets.gridSkeleton()
         else if (_genreMovies.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -408,7 +446,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_countries.isNotEmpty)
+        if (_countries.isEmpty)
+          SkeletonWidgets.gridSkeleton()
+        else if (_countries.isNotEmpty)
           CountryGrid(
             countries: _countries,
             onCountrySelected: (slug, name) {
@@ -487,14 +527,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             ),
           ),
         if (_isLoadingCountryMovies)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-              ),
-            ),
-          )
+          SkeletonWidgets.gridSkeleton()
         else if (_countryMovies.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -537,7 +570,9 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_years.isNotEmpty)
+        if (_years.isEmpty)
+          SkeletonWidgets.gridSkeleton()
+        else if (_years.isNotEmpty)
           YearGrid(
             years: _years,
             onYearSelected: (year, name) {
@@ -617,14 +652,7 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
             ),
           ),
         if (_isLoadingYearMovies)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-              ),
-            ),
-          )
+          SkeletonWidgets.gridSkeleton()
         else if (_yearMovies.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -663,108 +691,13 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     );
   }
 
-  Widget _buildGenreMovieItem(MovieModel movie) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/movie_detail',
-          arguments: movie,
-        );
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: _buildImage(movie.imageUrl),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              movie.title,
-              style: GoogleFonts.aBeeZee(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (movie.year.isNotEmpty)
-            SizedBox(
-              height: 15,
-              child: Text(
-                movie.year,
-                style: GoogleFonts.aBeeZee(
-                  color: Colors.grey[400],
-                  fontSize: 11,
-                ),
-                maxLines: 1,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImage(String? imageUrl) {
-    if (imageUrl != null &&
-        imageUrl.isNotEmpty &&
-        imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: Colors.grey[800],
-            child: Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          print('Lỗi tải hình ảnh từ URL: $imageUrl, lỗi: $error');
-          return Container(
-            color: Colors.grey[800],
-            child: const Icon(
-              Icons.broken_image,
-              color: Colors.white,
-            ),
-          );
-        },
-      );
-    } else {
-      print('imageUrl không hợp lệ hoặc rỗng: $imageUrl');
-      return Container(
-        color: Colors.grey[800],
-        child: const Icon(
-          Icons.movie,
-          color: Colors.white38,
-          size: 40,
-        ),
-      );
-    }
-  }
-
   Widget _buildMovieContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_apiMovies.isNotEmpty)
+        if (_apiMovies.isEmpty)
+          SkeletonWidgets.featuredMovieSkeleton()
+        else if (_apiMovies.isNotEmpty)
           FeaturedMovie(
             movie: _apiMovies[0],
             onTap: () async {
@@ -918,34 +851,103 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
   }
 
   Widget _buildLoadingSectionPlaceholder(String message) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Text(
-                message,
-                style: GoogleFonts.aBeeZee(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 16),
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-                  strokeWidth: 2,
-                ),
-              ),
-            ],
+    return SkeletonWidgets.movieCategorySectionSkeleton();
+  }
+
+  Widget _buildGenreMovieItem(MovieModel movie) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          '/movie_detail',
+          arguments: movie,
+        );
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: _buildImage(movie.imageUrl),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              movie.title,
+              style: GoogleFonts.aBeeZee(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (movie.year.isNotEmpty)
+            SizedBox(
+              height: 15,
+              child: Text(
+                movie.year,
+                style: GoogleFonts.aBeeZee(
+                  color: Colors.grey[400],
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+              ),
+            ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildImage(String? imageUrl) {
+    if (imageUrl != null &&
+        imageUrl.isNotEmpty &&
+        imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: Colors.grey[800],
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          print('Lỗi tải hình ảnh từ URL: $imageUrl, lỗi: $error');
+          return Container(
+            color: Colors.grey[800],
+            child: const Icon(
+              Icons.broken_image,
+              color: Colors.white,
+            ),
+          );
+        },
+      );
+    } else {
+      print('imageUrl không hợp lệ hoặc rỗng: $imageUrl');
+      return Container(
+        color: Colors.grey[800],
+        child: const Icon(
+          Icons.movie,
+          color: Colors.white38,
+          size: 40,
+        ),
+      );
+    }
   }
 }
