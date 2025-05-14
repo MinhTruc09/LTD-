@@ -4,7 +4,6 @@ import 'package:movieom_app/Entity/movie_model.dart';
 import 'package:movieom_app/controllers/auth_controller.dart';
 import 'package:movieom_app/controllers/movie_controller.dart';
 import 'package:movieom_app/services/favorite_movie_service.dart';
-import 'package:movieom_app/views/main_login_screen.dart';
 import 'package:movieom_app/widgets/category_filter.dart';
 import 'package:movieom_app/widgets/featured_movie.dart';
 import 'package:movieom_app/widgets/genre_grid.dart';
@@ -156,10 +155,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     for (var genre in genresToLoad) {
       try {
         final slug = genre['slug'];
-        final movies = await _movieController.getMoviesByGenreFromApi(
-          slug,
-          limit: 20
-        );
+        final movies =
+            await _movieController.getMoviesByGenreFromApi(slug, limit: 20);
 
         if (mounted) {
           setState(() {
@@ -212,7 +209,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     });
 
     try {
-      final movies = await _movieController.getMoviesByCountryFromApi(slug, limit: 20);
+      final movies =
+          await _movieController.getMoviesByCountryFromApi(slug, limit: 20);
       if (mounted) {
         setState(() {
           _countryMovies = movies;
@@ -239,13 +237,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     });
 
     try {
-      final movies = await _movieController.getMoviesByYearFromApi(
-        year,
-        page: page,
-        limit: 20,
-        category: category,
-        country: country
-      );
+      final movies = await _movieController.getMoviesByYearFromApi(year,
+          page: page, limit: 20, category: category, country: country);
       if (mounted) {
         setState(() {
           _yearMovies = movies;
@@ -263,116 +256,94 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
     }
   }
 
-  Future<void> _handleSignOut() async {
-    try {
-      await _authController.signOut();
-      if (!mounted) return;
-      
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MainLoginScreen()),
-        (route) => false,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đã xảy ra lỗi khi đăng xuất: ${e.toString()}'),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: () async => false, // Chặn back/swipe back
+      child: Scaffold(
         backgroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-        title: SizedBox(
-          height: 48,
-          child: FittedBox(
-            fit: BoxFit.contain,
-            child: MovieomLogo(fontSize: 35),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          automaticallyImplyLeading: false,
+          title: SizedBox(
+            height: 48,
+            child: FittedBox(
+              fit: BoxFit.contain,
+              child: MovieomLogo(fontSize: 35),
+            ),
           ),
-        ),
-        titleSpacing: 0,
-        centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: CategoryFilter(
-            categories: _categories,
-            selectedCategory: _selectedCategory,
-            onCategorySelected: (category) {
-              if (!mounted) return;
-              setState(() {
-                _selectedCategory = category;
-                if (category != 'Thể loại' &&
-                    category != 'Quốc gia' &&
-                    category != 'Năm') {
-                  _selectedGenreName = '';
-                  _genreMovies = [];
-                  _selectedCountryName = '';
-                  _countryMovies = [];
-                  _selectedYearName = '';
-                  _yearMovies = [];
-                }
-              });
-            },
-          ),
-        ),
-      ),
-      body: _isLoading
-          ? SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    SkeletonWidgets.featuredMovieSkeleton(),
-                    const SizedBox(height: 24),
-                    ...List.generate(
-                      3,
-                      (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0),
-                        child: SkeletonWidgets.movieCategorySectionSkeleton(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: () async {
-                await _loadMovies();
-              },
-              color: const Color(0xFF3F54D1),
-              child: GestureDetector(
-                onHorizontalDragEnd: (details) {
-                  if (details.primaryVelocity != null && details.primaryVelocity! < 0) {
-                    _handleSignOut();
+          titleSpacing: 0,
+          centerTitle: true,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(50),
+            child: CategoryFilter(
+              categories: _categories,
+              selectedCategory: _selectedCategory,
+              onCategorySelected: (category) {
+                if (!mounted) return;
+                setState(() {
+                  _selectedCategory = category;
+                  if (category != 'Thể loại' &&
+                      category != 'Quốc gia' &&
+                      category != 'Năm') {
+                    _selectedGenreName = '';
+                    _genreMovies = [];
+                    _selectedCountryName = '';
+                    _countryMovies = [];
+                    _selectedYearName = '';
+                    _yearMovies = [];
                   }
+                });
+              },
+            ),
+          ),
+        ),
+        body: _isLoading
+            ? SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      SkeletonWidgets.featuredMovieSkeleton(),
+                      const SizedBox(height: 24),
+                      ...List.generate(
+                        3,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 24.0),
+                          child: SkeletonWidgets.movieCategorySectionSkeleton(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: () async {
+                  await _loadMovies();
                 },
-                child: SafeArea(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        if (_selectedCategory == 'Thể loại')
-                          _buildGenreContent()
-                        else if (_selectedCategory == 'Quốc gia')
-                          _buildCountryContent()
-                        else if (_selectedCategory == 'Năm')
-                          _buildYearContent()
-                        else
-                          _buildMovieContent(),
-                      ],
+                color: const Color(0xFF3F54D1),
+                child: GestureDetector(
+                  // Đã xoá onHorizontalDragEnd để không tự động đăng xuất khi swipe phải
+                  child: SafeArea(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (_selectedCategory == 'Thể loại')
+                            _buildGenreContent()
+                          else if (_selectedCategory == 'Quốc gia')
+                            _buildCountryContent()
+                          else if (_selectedCategory == 'Năm')
+                            _buildYearContent()
+                          else
+                            _buildMovieContent(),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
@@ -419,7 +390,45 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
-                return _buildGenreMovieItem(_genreMovies[index]);
+                final movie = _genreMovies[index];
+                return GestureDetector(
+                  onTap: () async {
+                    bool isFavorite = false;
+                    try {
+                      final userId =
+                          await _authController.getCurrentUserId() ?? 'guest';
+                      if (userId != 'guest') {
+                        final favoriteService = Favoritemovieservice(userId);
+                        isFavorite =
+                            await favoriteService.isMovieFavorite(movie.id);
+                        if (!isFavorite &&
+                            movie.extraInfo != null &&
+                            movie.extraInfo!.containsKey('slug')) {
+                          final slug = movie.extraInfo!['slug'];
+                          if (slug != null &&
+                              slug is String &&
+                              slug.isNotEmpty) {
+                            isFavorite =
+                                await favoriteService.isMovieFavorite(slug);
+                          }
+                        }
+                      }
+                    } catch (e) {
+                      print('Lỗi kiểm tra trạng thái yêu thích: $e');
+                    }
+                    if (mounted) {
+                      Navigator.pushNamed(
+                        context,
+                        '/movie_detail',
+                        arguments: {
+                          'movie': movie,
+                          'isFavorite': isFavorite,
+                        },
+                      );
+                    }
+                  },
+                  child: _buildGenreMovieItem(movie),
+                );
               },
             ),
           )
@@ -480,32 +489,34 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                           break;
                         }
                       }
-                      
+
                       if (selectedSlug.isNotEmpty) {
                         setState(() {
                           _isLoadingCountryMovies = true;
                         });
-                        
+
                         try {
-                          final allMovies = await _movieController.getMoviesByCountryFromApi(
-                            selectedSlug,
-                            limit: 64
-                          );
-                          
+                          final allMovies = await _movieController
+                              .getMoviesByCountryFromApi(selectedSlug,
+                                  limit: 64);
+
                           if (mounted) {
-                            print('Chuyển đến màn hình xem tất cả phim quốc gia: $selectedSlug');
+                            print(
+                                'Chuyển đến màn hình xem tất cả phim quốc gia: $selectedSlug');
                             Navigator.pushNamed(
                               context,
                               '/category_movies',
                               arguments: {
-                                'category': 'Phim quốc gia $_selectedCountryName',
+                                'category':
+                                    'Phim quốc gia $_selectedCountryName',
                                 'movies': allMovies,
                                 'genre_slug': selectedSlug
                               },
                             );
                           }
                         } catch (e) {
-                          print('Lỗi khi tải tất cả phim quốc gia $_selectedCountryName: $e');
+                          print(
+                              'Lỗi khi tải tất cả phim quốc gia $_selectedCountryName: $e');
                         } finally {
                           if (mounted) {
                             setState(() {
@@ -611,13 +622,12 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                         setState(() {
                           _isLoadingYearMovies = true;
                         });
-                        
+
                         try {
-                          final allMovies = await _movieController.getMoviesByYearFromApi(
-                            _selectedYearName,
-                            limit: 64
-                          );
-                          
+                          final allMovies = await _movieController
+                              .getMoviesByYearFromApi(_selectedYearName,
+                                  limit: 64);
+
                           if (mounted) {
                             Navigator.pushNamed(
                               context,
@@ -630,7 +640,8 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
                             );
                           }
                         } catch (e) {
-                          print('Lỗi khi tải tất cả phim năm $_selectedYearName: $e');
+                          print(
+                              'Lỗi khi tải tất cả phim năm $_selectedYearName: $e');
                         } finally {
                           if (mounted) {
                             setState(() {
@@ -803,13 +814,11 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
               setState(() {
                 _isLoadingGenreMovies = true;
               });
-              
+
               try {
-                final allMovies = await _movieController.getMoviesByGenreFromApi(
-                  slug,
-                  limit: 64
-                );
-                
+                final allMovies = await _movieController
+                    .getMoviesByGenreFromApi(slug, limit: 64);
+
                 if (mounted) {
                   Navigator.pushNamed(
                     context,
@@ -856,12 +865,35 @@ class _MovieHomeScreenState extends State<MovieHomeScreen> {
 
   Widget _buildGenreMovieItem(MovieModel movie) {
     return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(
-          context,
-          '/movie_detail',
-          arguments: movie,
-        );
+      onTap: () async {
+        bool isFavorite = false;
+        try {
+          final userId = await _authController.getCurrentUserId() ?? 'guest';
+          if (userId != 'guest') {
+            final favoriteService = Favoritemovieservice(userId);
+            isFavorite = await favoriteService.isMovieFavorite(movie.id);
+            if (!isFavorite &&
+                movie.extraInfo != null &&
+                movie.extraInfo!.containsKey('slug')) {
+              final slug = movie.extraInfo!['slug'];
+              if (slug != null && slug is String && slug.isNotEmpty) {
+                isFavorite = await favoriteService.isMovieFavorite(slug);
+              }
+            }
+          }
+        } catch (e) {
+          print('Lỗi kiểm tra trạng thái yêu thích: $e');
+        }
+        if (mounted) {
+          Navigator.pushNamed(
+            context,
+            '/movie_detail',
+            arguments: {
+              'movie': movie,
+              'isFavorite': isFavorite,
+            },
+          );
+        }
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

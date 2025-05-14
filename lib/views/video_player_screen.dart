@@ -106,8 +106,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       // Nếu không có arguments, sử dụng thông tin từ widget props
       if (widget.episodes.isNotEmpty) {
         for (var ep in widget.episodes) {
-          if (ep.containsKey('link_m3u8') &&
-              ep.containsKey('name')) {
+          if (ep.containsKey('link_m3u8') && ep.containsKey('name')) {
             _episodes.add({
               'url': ep['link_m3u8'].toString(),
               'name': ep['name'].toString(),
@@ -343,9 +342,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   // Đổi episode bằng URL thay vì index, cho phép xác định lại máy chủ
   void _changeEpisodeByUrl(String url, String name) {
+    final int newIndex = _episodes.indexWhere((ep) => ep['url'] == url);
     if (url.isNotEmpty) {
       setState(() {
         _currentUrl = _validateAndProcessUrl(url);
+        if (newIndex != -1) {
+          _currentEpisodeIndex = newIndex;
+        }
         // Reset trạng thái
         _hasError = false;
         _errorMessage = '';

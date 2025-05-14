@@ -353,315 +353,353 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
+    return WillPopScope(
+      onWillPop: () async => false, // Chặn back/swipe back
+      child: Scaffold(
         backgroundColor: Colors.black,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Logo with smaller size
-            Container(
-              height: 24,
-              width: 24,
-              margin: const EdgeInsets.only(right: 8),
-            ),
-            Flexible(
-              child: Text(
-                movies.isNotEmpty && _controller.text.isNotEmpty
-                    ? 'Kết quả tìm kiếm: ${_controller.text}'
-                    : 'Tìm kiếm phim',
-                style: GoogleFonts.aBeeZee(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.black,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Logo with smaller size
+              Container(
+                height: 24,
+                width: 24,
+                margin: const EdgeInsets.only(right: 8),
               ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          // Search bar with gradient border
-          Container(
-            margin: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0xFF3F54D1).withOpacity(0.3),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                )
-              ],
-              gradient: LinearGradient(
-                colors: [Color(0xFF3F54D1), Colors.white],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            padding: const EdgeInsets.all(1.5),
-            child: TextField(
-              controller: _controller,
-              onChanged: _onSearchChanged,
-              style: GoogleFonts.aBeeZee(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: "Tìm kiếm phim...",
-                hintStyle: GoogleFonts.aBeeZee(color: Colors.grey.shade400),
-                prefixIcon: const Icon(Icons.search, color: Colors.white70),
-                suffixIcon: _controller.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white70),
-                        onPressed: () {
-                          _controller.clear();
-                          setState(() {
-                            movies = [];
-                            suggestions = [];
-                          });
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.grey.shade900,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
+              Flexible(
+                child: Text(
+                  movies.isNotEmpty && _controller.text.isNotEmpty
+                      ? 'Kết quả tìm kiếm: ${_controller.text}'
+                      : 'Tìm kiếm phim',
+                  style: GoogleFonts.aBeeZee(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
-            ),
+            ],
           ),
-
-          // Loading indicators
-          if (_isLoadingHistory)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
-
-          // Search history
-          if (searchHistory.isNotEmpty && !_isTyping && movies.isEmpty)
+          centerTitle: true,
+        ),
+        body: Column(
+          children: [
+            // Search bar with gradient border
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12),
+              margin: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade900,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF3F54D1).withOpacity(0.3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  )
+                ],
+                gradient: LinearGradient(
+                  colors: [Color(0xFF3F54D1), Colors.white],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-              height: 160,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Lịch sử tìm kiếm',
-                          style: GoogleFonts.aBeeZee(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        TextButton(
+              padding: const EdgeInsets.all(1.5),
+              child: TextField(
+                controller: _controller,
+                onChanged: _onSearchChanged,
+                style: GoogleFonts.aBeeZee(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: "Tìm kiếm phim...",
+                  hintStyle: GoogleFonts.aBeeZee(color: Colors.grey.shade400),
+                  prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                  suffixIcon: _controller.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.white70),
                           onPressed: () {
+                            _controller.clear();
                             setState(() {
-                              searchHistory = [];
+                              movies = [];
+                              suggestions = [];
                             });
                           },
-                          child: Text(
-                            'Xóa tất cả',
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.grey.shade900,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+
+            // Loading indicators
+            if (_isLoadingHistory)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+
+            // Search history
+            if (searchHistory.isNotEmpty && !_isTyping && movies.isEmpty)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                height: 160,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Lịch sử tìm kiếm',
                             style: GoogleFonts.aBeeZee(
-                              color: Color(0xFF3F54D1),
-                              fontSize: 15,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
                           ),
-                        ),
-                      ],
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                searchHistory = [];
+                              });
+                            },
+                            child: Text(
+                              'Xóa tất cả',
+                              style: GoogleFonts.aBeeZee(
+                                color: Color(0xFF3F54D1),
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: searchHistory.length,
-                      itemBuilder: (context, index) {
-                        final history = searchHistory[index];
-                        return ListTile(
-                          dense: true,
-                          leading:
-                              const Icon(Icons.history, color: Colors.grey),
-                          title: Text(
-                            history['keyword'],
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: searchHistory.length,
+                        itemBuilder: (context, index) {
+                          final history = searchHistory[index];
+                          return ListTile(
+                            dense: true,
+                            leading:
+                                const Icon(Icons.history, color: Colors.grey),
+                            title: Text(
+                              history['keyword'],
+                              style: GoogleFonts.aBeeZee(color: Colors.white),
+                            ),
+                            onTap: () {
+                              _controller.text = history['keyword'];
+                              _onSearchChanged(history['keyword']);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Suggestions while typing
+            if (_isLoadingSuggestions && _isTyping)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              ),
+            if (suggestions.isNotEmpty && _isTyping)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                height: 150,
+                child: ListView.builder(
+                  itemCount: suggestions.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      leading: const Icon(Icons.search, color: Colors.grey),
+                      title: Text(
+                        suggestions[index],
+                        style: GoogleFonts.aBeeZee(color: Colors.white),
+                      ),
+                      onTap: () {
+                        _controller.text = suggestions[index];
+                        _onSearchChanged(suggestions[index]);
+                      },
+                    );
+                  },
+                ),
+              ),
+
+            // Search results
+            Expanded(
+              child: _isLoadingMovies
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF3F54D1)),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Đang tìm kiếm...',
                             style: GoogleFonts.aBeeZee(color: Colors.white),
                           ),
-                          onTap: () {
-                            _controller.text = history['keyword'];
-                            _onSearchChanged(history['keyword']);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Suggestions while typing
-          if (_isLoadingSuggestions && _isTyping)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: CircularProgressIndicator(),
-            ),
-          if (suggestions.isNotEmpty && _isTyping)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade900,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              height: 150,
-              child: ListView.builder(
-                itemCount: suggestions.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: const Icon(Icons.search, color: Colors.grey),
-                    title: Text(
-                      suggestions[index],
-                      style: GoogleFonts.aBeeZee(color: Colors.white),
-                    ),
-                    onTap: () {
-                      _controller.text = suggestions[index];
-                      _onSearchChanged(suggestions[index]);
-                    },
-                  );
-                },
-              ),
-            ),
-
-          // Search results
-          Expanded(
-            child: _isLoadingMovies
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Đang tìm kiếm...',
-                          style: GoogleFonts.aBeeZee(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  )
-                : _errorMessage.isNotEmpty
-                    ? Center(
-                        child: Text(
-                          _errorMessage,
-                          style: GoogleFonts.aBeeZee(color: Colors.white),
-                          textAlign: TextAlign.center,
-                        ),
-                      )
-                    : movies.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.search,
-                                  size: 80,
-                                  color: Color(0xFF3F54D1).withOpacity(0.5),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _controller.text.isEmpty
-                                      ? 'Nhập từ khóa để tìm kiếm phim'
-                                      : 'Không tìm thấy kết quả nào',
-                                  style: GoogleFonts.aBeeZee(
-                                    color: Colors.white,
-                                    fontSize: 18,
+                        ],
+                      ),
+                    )
+                  : _errorMessage.isNotEmpty
+                      ? Center(
+                          child: Text(
+                            _errorMessage,
+                            style: GoogleFonts.aBeeZee(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      : movies.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search,
+                                    size: 80,
+                                    color: Color(0xFF3F54D1).withOpacity(0.5),
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          )
-                        : GridView.builder(
-                            padding: const EdgeInsets.all(12),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio:
-                                  0.58, // Taller cards for more info
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                            itemCount: movies.length,
-                            itemBuilder: (context, index) {
-                              final movie = movies[index];
-
-                              // Extract data from extraInfo if available
-                              final extraInfo =
-                                  movie.toMovieModel().extraInfo ?? {};
-                              final String episodeInfo =
-                                  extraInfo['episode_current']?.toString() ??
-                                      '';
-                              final String quality =
-                                  extraInfo['quality']?.toString() ?? '';
-                              final String language =
-                                  extraInfo['lang']?.toString() ?? '';
-
-                              return GestureDetector(
-                                onTap: () => _navigateToMovieDetail(movie),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade900,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.3),
-                                        spreadRadius: 1,
-                                        blurRadius: 5,
-                                      ),
-                                    ],
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _controller.text.isEmpty
+                                        ? 'Nhập từ khóa để tìm kiếm phim'
+                                        : 'Không tìm thấy kết quả nào',
+                                    style: GoogleFonts.aBeeZee(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // Movie poster
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(12),
-                                            topRight: Radius.circular(12),
-                                          ),
-                                          child: Stack(
-                                            fit: StackFit.expand,
-                                            children: [
-                                              movie.poster.isNotEmpty
-                                                  ? Image.network(
-                                                      movie.poster.startsWith(
-                                                              'http')
-                                                          ? movie.poster
-                                                          : 'https://phimimg.com/${movie.poster}',
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (context,
-                                                              error,
-                                                              stackTrace) =>
-                                                          Container(
+                                ],
+                              ),
+                            )
+                          : GridView.builder(
+                              padding: const EdgeInsets.all(12),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio:
+                                    0.58, // Taller cards for more info
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                              ),
+                              itemCount: movies.length,
+                              itemBuilder: (context, index) {
+                                final movie = movies[index];
+
+                                // Extract data from extraInfo if available
+                                final extraInfo =
+                                    movie.toMovieModel().extraInfo ?? {};
+                                final String episodeInfo =
+                                    extraInfo['episode_current']?.toString() ??
+                                        '';
+                                final String quality =
+                                    extraInfo['quality']?.toString() ?? '';
+                                final String language =
+                                    extraInfo['lang']?.toString() ?? '';
+
+                                return GestureDetector(
+                                  onTap: () => _navigateToMovieDetail(movie),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade900,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.3),
+                                          spreadRadius: 1,
+                                          blurRadius: 5,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Movie poster
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                              topLeft: Radius.circular(12),
+                                              topRight: Radius.circular(12),
+                                            ),
+                                            child: Stack(
+                                              fit: StackFit.expand,
+                                              children: [
+                                                movie.poster.isNotEmpty
+                                                    ? Image.network(
+                                                        movie.poster.startsWith(
+                                                                'http')
+                                                            ? movie.poster
+                                                            : 'https://phimimg.com/${movie.poster}',
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (context,
+                                                                error,
+                                                                stackTrace) =>
+                                                            Container(
+                                                          color: Colors
+                                                              .grey.shade800,
+                                                          child: const Icon(
+                                                            Icons.movie,
+                                                            color: Colors.white,
+                                                            size: 50,
+                                                          ),
+                                                        ),
+                                                        loadingBuilder: (context,
+                                                            child,
+                                                            loadingProgress) {
+                                                          if (loadingProgress ==
+                                                              null)
+                                                            return child;
+                                                          return Center(
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                              value: loadingProgress
+                                                                          .expectedTotalBytes !=
+                                                                      null
+                                                                  ? loadingProgress
+                                                                          .cumulativeBytesLoaded /
+                                                                      loadingProgress
+                                                                          .expectedTotalBytes!
+                                                                  : null,
+                                                              valueColor:
+                                                                  const AlwaysStoppedAnimation<
+                                                                          Color>(
+                                                                      Color(
+                                                                          0xFF3F54D1)),
+                                                            ),
+                                                          );
+                                                        },
+                                                      )
+                                                    : Container(
                                                         color: Colors
                                                             .grey.shade800,
                                                         child: const Icon(
@@ -670,209 +708,180 @@ class _SearchScreenState extends State<SearchScreen> {
                                                           size: 50,
                                                         ),
                                                       ),
-                                                      loadingBuilder: (context,
-                                                          child,
-                                                          loadingProgress) {
-                                                        if (loadingProgress ==
-                                                            null) return child;
-                                                        return Center(
-                                                          child:
-                                                              CircularProgressIndicator(
-                                                            value: loadingProgress
-                                                                        .expectedTotalBytes !=
-                                                                    null
-                                                                ? loadingProgress
-                                                                        .cumulativeBytesLoaded /
-                                                                    loadingProgress
-                                                                        .expectedTotalBytes!
-                                                                : null,
-                                                            valueColor:
-                                                                const AlwaysStoppedAnimation<
-                                                                        Color>(
-                                                                    Color(0xFF3F54D1)),
-                                                          ),
-                                                        );
-                                                      },
-                                                    )
-                                                  : Container(
-                                                      color:
-                                                          Colors.grey.shade800,
-                                                      child: const Icon(
-                                                        Icons.movie,
-                                                        color: Colors.white,
-                                                        size: 50,
+                                                // Play icon overlay
+                                                Positioned.fill(
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        begin:
+                                                            Alignment.topCenter,
+                                                        end: Alignment
+                                                            .bottomCenter,
+                                                        colors: [
+                                                          Colors.transparent,
+                                                          Colors.black
+                                                              .withOpacity(0.7),
+                                                        ],
                                                       ),
                                                     ),
-                                              // Play icon overlay
-                                              Positioned.fill(
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    gradient: LinearGradient(
-                                                      begin:
-                                                          Alignment.topCenter,
-                                                      end: Alignment
-                                                          .bottomCenter,
-                                                      colors: [
-                                                        Colors.transparent,
-                                                        Colors.black
-                                                            .withOpacity(0.7),
-                                                      ],
+                                                    child: Center(
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.white
+                                                              .withOpacity(0.2),
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: const Icon(
+                                                          Icons.play_arrow,
+                                                          color: Colors.white,
+                                                          size: 30,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
-                                                  child: Center(
+                                                ),
+                                                // Year tag
+                                                if (movie.year.isNotEmpty)
+                                                  Positioned(
+                                                    top: 8,
+                                                    right: 8,
                                                     child: Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8),
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4,
+                                                      ),
                                                       decoration: BoxDecoration(
-                                                        color: Colors.white
-                                                            .withOpacity(0.2),
-                                                        shape: BoxShape.circle,
+                                                        color: Color(0xFF3F54D1)
+                                                            .withOpacity(0.8),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4),
                                                       ),
-                                                      child: const Icon(
-                                                        Icons.play_arrow,
-                                                        color: Colors.white,
-                                                        size: 30,
+                                                      child: Text(
+                                                        movie.year,
+                                                        style:
+                                                            GoogleFonts.aBeeZee(
+                                                          color: Colors.white,
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
+
+                                                // Quality tag
+                                                if (quality.isNotEmpty)
+                                                  Positioned(
+                                                    bottom: 8,
+                                                    left: 8,
+                                                    child: Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.red
+                                                            .withOpacity(0.8),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4),
+                                                      ),
+                                                      child: Text(
+                                                        quality,
+                                                        style:
+                                                            GoogleFonts.aBeeZee(
+                                                          color: Colors.white,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+
+                                                // Language tag
+                                                if (language.isNotEmpty)
+                                                  Positioned(
+                                                    bottom: 8,
+                                                    right: 8,
+                                                    child: Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.blue
+                                                            .withOpacity(0.8),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4),
+                                                      ),
+                                                      child: Text(
+                                                        language,
+                                                        style:
+                                                            GoogleFonts.aBeeZee(
+                                                          color: Colors.white,
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        // Movie title and info
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                movie.title,
+                                                style: GoogleFonts.aBeeZee(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15,
                                                 ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                              // Year tag
-                                              if (movie.year.isNotEmpty)
-                                                Positioned(
-                                                  top: 8,
-                                                  right: 8,
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: Color(0xFF3F54D1)
-                                                          .withOpacity(0.8),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                    ),
-                                                    child: Text(
-                                                      movie.year,
-                                                      style:
-                                                          GoogleFonts.aBeeZee(
-                                                        color: Colors.white,
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
+                                              const SizedBox(height: 4),
+                                              if (episodeInfo.isNotEmpty)
+                                                Text(
+                                                  episodeInfo,
+                                                  style: GoogleFonts.aBeeZee(
+                                                    color: Colors.grey.shade400,
+                                                    fontSize: 11,
                                                   ),
-                                                ),
-
-                                              // Quality tag
-                                              if (quality.isNotEmpty)
-                                                Positioned(
-                                                  bottom: 8,
-                                                  left: 8,
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.red
-                                                          .withOpacity(0.8),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                    ),
-                                                    child: Text(
-                                                      quality,
-                                                      style:
-                                                          GoogleFonts.aBeeZee(
-                                                        color: Colors.white,
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-
-                                              // Language tag
-                                              if (language.isNotEmpty)
-                                                Positioned(
-                                                  bottom: 8,
-                                                  right: 8,
-                                                  child: Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2,
-                                                    ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.blue
-                                                          .withOpacity(0.8),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4),
-                                                    ),
-                                                    child: Text(
-                                                      language,
-                                                      style:
-                                                          GoogleFonts.aBeeZee(
-                                                        color: Colors.white,
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                             ],
                                           ),
                                         ),
-                                      ),
-                                      // Movie title and info
-                                      Padding(
-                                        padding: const EdgeInsets.all(8.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              movie.title,
-                                              style: GoogleFonts.aBeeZee(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            const SizedBox(height: 4),
-                                            if (episodeInfo.isNotEmpty)
-                                              Text(
-                                                episodeInfo,
-                                                style: GoogleFonts.aBeeZee(
-                                                  color: Colors.grey.shade400,
-                                                  fontSize: 11,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
-                          ),
-          ),
-        ],
+                                );
+                              },
+                            ),
+            ),
+          ],
+        ),
       ),
     );
   }
