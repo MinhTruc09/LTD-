@@ -164,22 +164,25 @@ class _FavoriteScreenState extends State<FavoriteScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Column(
-        children: [
-          const Appbarfavorite(),
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
-                    ),
-                  )
-                : _buildFavoriteContent(),
-          ),
-        ],
+    return WillPopScope(
+      onWillPop: () async => false, // Chặn back/swipe back
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Column(
+          children: [
+            const Appbarfavorite(),
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF3F54D1)),
+                      ),
+                    )
+                  : _buildFavoriteContent(),
+            ),
+          ],
+        ),
       ),
     );
   }
