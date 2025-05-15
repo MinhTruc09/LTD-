@@ -116,7 +116,8 @@ Nếu bạn có bất kỳ câu hỏi hoặc đề xuất nào, vui lòng liên 
 ## QR Code
 
 <p align="center">
-  <img src="assets/images/logo.png" alt="Movieom Logo" width="200"/>
+  <img src="![ỨNG DỤNG XEM PHIM TRỰC TUYẾN MOVIEOM](https://github.com/user-attachments/assets/8985daa0-80b7-4d6a-a7f9-7e579d86080c)
+" alt="Movieom Logo" width="200"/>
 </p>
 
 **Lưu ý:** Bạn có thể quét mã QR code để tìm hiểu thêm về ứng dụng hoặc tải về. Mã QR code được cung cấp trong tài liệu dự án.
