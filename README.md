@@ -1,5 +1,9 @@
 # Movieom App
 
+<p align="center">
+  <img src="assets/images/logo.png" alt="Movieom Logo" width="200"/>
+</p>
+
 Ứng dụng xem phim dành cho thiết bị di động, được phát triển với Flutter.
 
 ## Giới thiệu
@@ -40,6 +44,14 @@ Movieom là ứng dụng xem phim trực tuyến với giao diện thân thiện
 5. **Yêu thích**: Lưu và quản lý danh sách phim yêu thích
 6. **Hồ sơ người dùng**: Quản lý tài khoản, xem lịch sử
 
+## Giao diện ứng dụng
+
+Movieom có giao diện người dùng hiện đại và trực quan:
+- Theme tối ưu cho trải nghiệm xem phim
+- Hiệu ứng chuyển động mượt mà
+- Bố cục thông minh, dễ điều hướng
+- Tối ưu hóa cho nhiều kích thước màn hình
+
 ## Cài đặt
 
 ### Yêu cầu hệ thống
@@ -50,7 +62,7 @@ Movieom là ứng dụng xem phim trực tuyến với giao diện thân thiện
 ### Các bước cài đặt
 1. Clone dự án:
    ```bash
-   git clone [<repository_url>](https://github.com/MinhTruc09/LTD-.git)
+   git clone https://github.com/MinhTruc09/LTD-.git
    ```
 
 2. Cài đặt dependencies:
@@ -62,9 +74,57 @@ Movieom là ứng dụng xem phim trực tuyến với giao diện thân thiện
    ```bash
    flutter run
    ```
+
+## Kiến trúc ứng dụng
+
+Movieom được xây dựng với kiến trúc rõ ràng và module hóa cao:
+
+1. **Điểm khởi đầu**: `lib/main.dart` - Khởi tạo Firebase và thiết lập theme tối cho ứng dụng
+2. **Định tuyến**: `lib/routes/app_routes.dart` - Quản lý điều hướng giữa các màn hình
+3. **Giao diện người dùng**: Dark Theme được tối ưu hóa cho việc xem phim
+4. **Quản lý Trạng thái**: Sử dụng kết hợp StatefulWidget và dịch vụ Firebase
+5. **Xác thực**: Firebase Authentication đảm bảo quản lý người dùng an toàn
+6. **Lưu trữ dữ liệu**: Cloud Firestore lưu thông tin người dùng và danh sách yêu thích
+
+### Mô hình dữ liệu
+
+Ứng dụng sử dụng các mô hình dữ liệu chính:
+- `MovieModel`: Biểu diễn thông tin phim từ API
+- `UserModel`: Quản lý thông tin người dùng
+- `ApiMovie`: Xử lý dữ liệu thô từ API phim
+
 ## Nguồn dữ liệu phim
 Ứng dụng sử dụng [phimapi.com](https://kkphim.com/tai-lieu-api) làm nguồn dữ liệu chính, cung cấp:
 - Thông tin phim
 - Poster và hình ảnh
 - Đường dẫn xem phim
 - Thể loại và danh mục phim
+
+## Đóng góp
+
+Chúng tôi rất hoan nghênh sự đóng góp từ cộng đồng:
+1. Fork dự án
+2. Tạo nhánh feature: `git checkout -b feature/amazing-feature`
+3. Commit thay đổi: `git commit -m 'Add some amazing feature'`
+4. Push lên nhánh: `git push origin feature/amazing-feature`
+5. Mở Pull Request
+
+## Liên hệ
+
+Nếu bạn có bất kỳ câu hỏi hoặc đề xuất nào, vui lòng liên hệ với nhóm phát triển qua email hoặc mở issue trong repository.
+
+## QR Code
+
+<p align="center">
+  <img src="assets/images/logo.png" alt="Movieom Logo" width="200"/>
+</p>
+
+**Lưu ý:** Bạn có thể quét mã QR code để tìm hiểu thêm về ứng dụng hoặc tải về. Mã QR code được cung cấp trong tài liệu dự án.
+
+## Giấy phép
+
+Dự án này được phân phối dưới Giấy phép MIT. Xem tệp `LICENSE` để biết thêm thông tin.
+
+---
+
+&copy; 2023 Movieom Team. All rights reserved.
